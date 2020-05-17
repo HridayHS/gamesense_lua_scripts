@@ -65,7 +65,7 @@ client.set_event_callback('paint', function()
 					local RenderTextString
 					if SmokeOwnerEntity == entity.get_local_player() then
 						RenderTextString = 'OWN SMOKE'
-					elseif entity.is_enemy(SmokeOwnerEntity and ui.get(GrenadeOwner.EnemyName) then
+					elseif entity.is_enemy(SmokeOwnerEntity) and ui.get(GrenadeOwner.EnemyName) then
 						if isGrenadeESPOn then
 							RenderTextString = 'ENEMY ' .. SmokeOwnerName
 						else
