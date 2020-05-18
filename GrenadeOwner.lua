@@ -30,9 +30,9 @@ client.set_event_callback('paint', function()
 					if DecoyOwnerEntity == entity.get_local_player() then
 						RenderTextString = 'OWN'
 					elseif not entity.is_enemy(DecoyOwnerEntity) then
-						RenderTextString = 'TEAMMATE ' .. DecoyOwnerName
+						RenderTextString = 'TEAMMATE  ' .. DecoyOwnerName
 					elseif entity.is_enemy(DecoyOwnerEntity) and ui.get(GrenadeOwner.EnemyName) then
-						RenderTextString = 'ENEMY ' .. DecoyOwnerName
+						RenderTextString = 'ENEMY  ' .. DecoyOwnerName
 					end
 
 					if RenderTextString ~= nil then
@@ -59,9 +59,9 @@ client.set_event_callback('paint', function()
 					if SmokeOwnerEntity == entity.get_local_player() then
 						RenderTextString = 'OWN'
 					elseif not entity.is_enemy(SmokeOwnerEntity) then
-						RenderTextString = 'TEAMMATE ' .. SmokeOwnerName
+						RenderTextString = 'TEAMMATE  ' .. SmokeOwnerName
 					elseif entity.is_enemy(SmokeOwnerEntity) and ui.get(GrenadeOwner.EnemyName) then
-						RenderTextString = 'ENEMY ' .. SmokeOwnerName
+						RenderTextString = 'ENEMY  ' .. SmokeOwnerName
 					end
 
 					if RenderTextString ~= nil then
