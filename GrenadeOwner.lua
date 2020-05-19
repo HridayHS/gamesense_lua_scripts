@@ -6,12 +6,7 @@ local GrenadeOwner = {
 }
 local Ref_GrenadeESP = ui.reference('VISUALS', 'Other ESP', 'Grenades')
 
-client.set_event_callback('paint', function()
-	-- Return if Master Switch is disabled.
-	if not ui.get(GrenadeOwner.Enabled) then
-		return
-	end
-
+local function DrawGrenadeOwnerName()
 	local isGrenadeESPOn = ui.get(Ref_GrenadeESP)
 	local Grenades = ui.get(GrenadeOwner.Grenades)
 
@@ -73,5 +68,13 @@ client.set_event_callback('paint', function()
 				end
 			end
 		end
+	end
+end
+
+ui.set_callback(GrenadeOwner.Enabled, function(itemNumber)
+	if ui.get(itemNumber) then
+		client.set_event_callback('paint', DrawGrenadeOwnerName)
+	else
+		client.unset_event_callback('paint', DrawGrenadeOwnerName)
 	end
 end)
