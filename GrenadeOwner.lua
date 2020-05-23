@@ -6,7 +6,7 @@ local GrenadeOwner = {
 }
 local Ref_GrenadeESP = ui.reference('VISUALS', 'Other ESP', 'Grenades')
 
-GrenadeOwner.DrawOwnerName = function()
+GrenadeOwner.DrawOwnerName = function ()
 	local isGrenadeESPOn = ui.get(Ref_GrenadeESP)
 	local Grenades = ui.get(GrenadeOwner.Grenades)
 
@@ -71,7 +71,7 @@ GrenadeOwner.DrawOwnerName = function()
 	end
 end
 
-ui.set_callback(GrenadeOwner.Enabled, function(itemNumber)
+ui.set_callback(GrenadeOwner.Enabled, function (itemNumber)
 	if ui.get(itemNumber) then
 		client.set_event_callback('paint', GrenadeOwner.DrawOwnerName)
 	else
