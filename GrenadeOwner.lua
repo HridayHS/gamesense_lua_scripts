@@ -15,12 +15,12 @@ GrenadeOwner.DrawOwnerName = function ()
 		if Grenades[i] == 'Decoy' then
 			local Decoys = entity.get_all('CDecoyProjectile')
 			for i=1, #Decoys do
-				local DecoyOriginX, DecoyOriginY, DecoyOriginZ = entity.get_prop(Decoys[i], 'm_vecOrigin')
+				local DecoyOriginX, DecoyOriginY, DecoyOriginZ = entity.get_origin(Decoys[i])
 				local WorldX, WorldY = renderer.world_to_screen(DecoyOriginX, DecoyOriginY, DecoyOriginZ)
 				if WorldX ~= nil then
 					local DecoyOwnerEntity = entity.get_prop(Decoys[i], 'm_hThrower')
 					local DecoyOwnerName = string.upper(entity.get_player_name(DecoyOwnerEntity))
-					local RenderTextString
+					local RenderTextString	
 
 					if DecoyOwnerEntity == entity.get_local_player() then
 						RenderTextString = 'OWN'
@@ -44,7 +44,7 @@ GrenadeOwner.DrawOwnerName = function ()
 		if Grenades[i] == 'Smoke' then
 			local Smokes = entity.get_all('CSmokeGrenadeProjectile')
 			for i=1, #Smokes do
-				local SmokeOriginX, SmokeOriginY, SmokeOriginZ = entity.get_prop(Smokes[i], 'm_vecOrigin')
+				local SmokeOriginX, SmokeOriginY, SmokeOriginZ = entity.get_origin(Smokes[i])
 				local WorldX, WorldY = renderer.world_to_screen(SmokeOriginX, SmokeOriginY, SmokeOriginZ)
 				if WorldX ~= nil then
 					local SmokeOwnerEntity = entity.get_prop(Smokes[i], 'm_hThrower')
