@@ -22,8 +22,12 @@ ui_set_visible(GrenadeOwner.Grenades, false)
 ui_set_visible(GrenadeOwner.EnemyName, false)
 
 GrenadeOwner.DrawOwnerName = function ()
-	local isGrenadeESPOn = ui_get(References.GrenadeESP)
 	local Grenades = ui_get(GrenadeOwner.Grenades)
+	if Grenades[1] == nil then
+		return
+	end
+
+	local isGrenadeESPOn = ui_get(References.GrenadeESP)
 
 	for i=1, #Grenades do
 		-- Decoy Grenades
