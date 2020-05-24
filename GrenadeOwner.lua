@@ -4,7 +4,7 @@ local string_upper = string.upper
 -- Gamesense API
 local client_set_event_callback, client_unset_event_callback = client.set_event_callback, client.unset_event_callback
 local entity_get_all, entity_get_origin, entity_get_prop, entity_get_local_player, entity_get_player_name, entity_is_enemy = entity.get_all, entity.get_origin, entity.get_prop, entity.get_local_player, entity.get_player_name, entity.is_enemy
-local renderer_text = renderer.text
+local renderer_text, renderer_world_to_screen = renderer.text, renderer.world_to_screen
 local ui_get, ui_set_visible = ui.get, ui.set_visible
 
 local References = {
@@ -35,7 +35,7 @@ GrenadeOwner.DrawOwnerName = function ()
 			local Decoys = entity_get_all('CDecoyProjectile')
 			for i=1, #Decoys do
 				local DecoyOriginX, DecoyOriginY, DecoyOriginZ = entity_get_origin(Decoys[i])
-				local WorldX, WorldY = renderer.world_to_screen(DecoyOriginX, DecoyOriginY, DecoyOriginZ)
+				local WorldX, WorldY = renderer_world_to_screen(DecoyOriginX, DecoyOriginY, DecoyOriginZ)
 				if WorldX ~= nil then
 					local DecoyOwnerEntity = entity_get_prop(Decoys[i], 'm_hThrower')
 					local DecoyOwnerName = string_upper(entity_get_player_name(DecoyOwnerEntity))
@@ -64,7 +64,7 @@ GrenadeOwner.DrawOwnerName = function ()
 			local Smokes = entity_get_all('CSmokeGrenadeProjectile')
 			for i=1, #Smokes do
 				local SmokeOriginX, SmokeOriginY, SmokeOriginZ = entity_get_origin(Smokes[i])
-				local WorldX, WorldY = renderer.world_to_screen(SmokeOriginX, SmokeOriginY, SmokeOriginZ)
+				local WorldX, WorldY = renderer_world_to_screen(SmokeOriginX, SmokeOriginY, SmokeOriginZ)
 				if WorldX ~= nil then
 					local SmokeOwnerEntity = entity_get_prop(Smokes[i], 'm_hThrower')
 					local SmokeOwnerName = string_upper(entity_get_player_name(SmokeOwnerEntity))
