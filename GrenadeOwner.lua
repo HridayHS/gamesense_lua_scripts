@@ -1,3 +1,12 @@
+-- LUA
+local string_upper = string.upper
+
+-- Gamesense API
+local client_set_event_callback, client_unset_event_callback = client.set_event_callback, client.unset_event_callback
+local entity_get_all, entity_get_origin, entity_get_prop, entity_get_local_player, entity_get_player_name, entity_is_enemy = entity.get_all, entity.get_origin, entity.get_prop, entity.get_local_player, entity.get_player_name, entity.is_enemy
+local renderer_text = renderer.text
+local ui_get, ui_set_visible = ui.get, ui.set_visible
+
 local References = {
 	GrenadeESP = ui.reference('VISUALS', 'Other ESP', 'Grenades')
 }
@@ -9,37 +18,37 @@ local GrenadeOwner = {
 	EnemyName = ui.new_checkbox('Lua', 'A', 'Show enemy name'),
 }
 
-ui.set_visible(GrenadeOwner.Grenades, false)
-ui.set_visible(GrenadeOwner.EnemyName, false)
+ui_set_visible(GrenadeOwner.Grenades, false)
+ui_set_visible(GrenadeOwner.EnemyName, false)
 
 GrenadeOwner.DrawOwnerName = function ()
-	local isGrenadeESPOn = ui.get(References.GrenadeESP)
-	local Grenades = ui.get(GrenadeOwner.Grenades)
+	local isGrenadeESPOn = ui_get(References.GrenadeESP)
+	local Grenades = ui_get(GrenadeOwner.Grenades)
 
 	for i=1, #Grenades do
 		-- Decoy Grenades
 		if Grenades[i] == 'Decoy' then
-			local Decoys = entity.get_all('CDecoyProjectile')
+			local Decoys = entity_get_all('CDecoyProjectile')
 			for i=1, #Decoys do
-				local DecoyOriginX, DecoyOriginY, DecoyOriginZ = entity.get_origin(Decoys[i])
+				local DecoyOriginX, DecoyOriginY, DecoyOriginZ = entity_get_origin(Decoys[i])
 				local WorldX, WorldY = renderer.world_to_screen(DecoyOriginX, DecoyOriginY, DecoyOriginZ)
 				if WorldX ~= nil then
-					local DecoyOwnerEntity = entity.get_prop(Decoys[i], 'm_hThrower')
-					local DecoyOwnerName = string.upper(entity.get_player_name(DecoyOwnerEntity))
+					local DecoyOwnerEntity = entity_get_prop(Decoys[i], 'm_hThrower')
+					local DecoyOwnerName = string_upper(entity_get_player_name(DecoyOwnerEntity))
 					local RenderTextString	
 
-					if DecoyOwnerEntity == entity.get_local_player() then
+					if DecoyOwnerEntity == entity_get_local_player() then
 						RenderTextString = 'YOUR'
-					elseif not entity.is_enemy(DecoyOwnerEntity) then
+					elseif not entity_is_enemy(DecoyOwnerEntity) then
 						RenderTextString = 'TEAMMATE  ' .. DecoyOwnerName
-					elseif entity.is_enemy(DecoyOwnerEntity) and ui.get(GrenadeOwner.EnemyName) then
+					elseif entity_is_enemy(DecoyOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
 						RenderTextString = 'ENEMY  ' .. DecoyOwnerName
 					end
 
 					if RenderTextString ~= nil then
-						renderer.text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
+						renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
 						if not isGrenadeESPOn then
-							renderer.text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'DECOY')
+							renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'DECOY')
 						end
 					end
 				end
@@ -48,27 +57,27 @@ GrenadeOwner.DrawOwnerName = function ()
 
 		-- Smoke Grenades
 		if Grenades[i] == 'Smoke' then
-			local Smokes = entity.get_all('CSmokeGrenadeProjectile')
+			local Smokes = entity_get_all('CSmokeGrenadeProjectile')
 			for i=1, #Smokes do
-				local SmokeOriginX, SmokeOriginY, SmokeOriginZ = entity.get_origin(Smokes[i])
+				local SmokeOriginX, SmokeOriginY, SmokeOriginZ = entity_get_origin(Smokes[i])
 				local WorldX, WorldY = renderer.world_to_screen(SmokeOriginX, SmokeOriginY, SmokeOriginZ)
 				if WorldX ~= nil then
-					local SmokeOwnerEntity = entity.get_prop(Smokes[i], 'm_hThrower')
-					local SmokeOwnerName = string.upper(entity.get_player_name(SmokeOwnerEntity))
+					local SmokeOwnerEntity = entity_get_prop(Smokes[i], 'm_hThrower')
+					local SmokeOwnerName = string_upper(entity_get_player_name(SmokeOwnerEntity))
 					local RenderTextString
 
-					if SmokeOwnerEntity == entity.get_local_player() then
+					if SmokeOwnerEntity == entity_get_local_player() then
 						RenderTextString = 'YOUR'
-					elseif not entity.is_enemy(SmokeOwnerEntity) then
+					elseif not entity_is_enemy(SmokeOwnerEntity) then
 						RenderTextString = 'TEAMMATE  ' .. SmokeOwnerName
-					elseif entity.is_enemy(SmokeOwnerEntity) and ui.get(GrenadeOwner.EnemyName) then
+					elseif entity_is_enemy(SmokeOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
 						RenderTextString = 'ENEMY  ' .. SmokeOwnerName
 					end
 
 					if RenderTextString ~= nil then
-						renderer.text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
+						renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
 						if not isGrenadeESPOn then
-							renderer.text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'SMOKE')
+							renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'SMOKE')
 						end
 					end
 				end
@@ -78,16 +87,17 @@ GrenadeOwner.DrawOwnerName = function ()
 end
 
 ui.set_callback(GrenadeOwner.Enabled, function (itemNumber)
-	local isGrenadeOwnerEnabled = ui.get(itemNumber)
+	-- Get grenade owner state
+	local isGrenadeOwnerEnabled = ui_get(itemNumber)
 
-	-- Handle Menu Items
-	ui.set_visible(GrenadeOwner.Grenades, isGrenadeOwnerEnabled)
-	ui.set_visible(GrenadeOwner.EnemyName, isGrenadeOwnerEnabled)
+	-- Handle menu items
+	ui_set_visible(GrenadeOwner.Grenades, isGrenadeOwnerEnabled)
+	ui_set_visible(GrenadeOwner.EnemyName, isGrenadeOwnerEnabled)
 
-	-- Main
+	-- Handle main function
 	if isGrenadeOwnerEnabled then
-		client.set_event_callback('paint', GrenadeOwner.DrawOwnerName)
+		client_set_event_callback('paint', GrenadeOwner.DrawOwnerName)
 	else
-		client.unset_event_callback('paint', GrenadeOwner.DrawOwnerName)
+		client_unset_event_callback('paint', GrenadeOwner.DrawOwnerName)
 	end
 end)
