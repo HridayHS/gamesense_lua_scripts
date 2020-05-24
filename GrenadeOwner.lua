@@ -35,7 +35,7 @@ GrenadeOwner.DrawOwnerName = function ()
 				if WorldX ~= nil then
 					local DecoyOwnerEntity = entity_get_prop(Decoys[i], 'm_hThrower')
 					local DecoyOwnerName = string_upper(entity_get_player_name(DecoyOwnerEntity))
-					local RenderTextString	
+					local RenderTextString
 
 					if DecoyOwnerEntity == entity_get_local_player() then
 						RenderTextString = 'YOUR'
