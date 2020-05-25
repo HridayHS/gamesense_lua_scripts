@@ -1,4 +1,4 @@
--- LUA
+-- Lua
 local string_upper = string.upper
 
 -- Gamesense API
@@ -21,125 +21,54 @@ local GrenadeOwner = {
 ui_set_visible(GrenadeOwner.Grenades, false)
 ui_set_visible(GrenadeOwner.EnemyName, false)
 
+local GrenadeNetvar = {
+	['Decoy'] = {
+		Netvar = 'CDecoyProjectile'
+	},
+	['Smoke'] = {
+		Netvar = 'CSmokeGrenadeProjectile'
+	},
+	['Molotov'] = {
+		Netvar = 'CInferno'
+	}
+}
+
 GrenadeOwner.DrawOwnerName = function ()
 	local Grenades = ui_get(GrenadeOwner.Grenades)
-	if Grenades[1] == nil then
+
+	if #Grenades == 0 then
 		return
 	end
 
-	local isGrenadeESPOn = ui_get(References.GrenadeESP)
-
 	for i=1, #Grenades do
-		-- Decoy Grenades
-		if Grenades[i] == 'Decoy' then
-			local Decoys = entity_get_all('CDecoyProjectile')
-			for i=1, #Decoys do
-				local DecoyOriginX, DecoyOriginY, DecoyOriginZ = entity_get_origin(Decoys[i])
-				local WorldX, WorldY = renderer_world_to_screen(DecoyOriginX, DecoyOriginY, DecoyOriginZ)
-				if WorldX ~= nil then
-					local DecoyOwnerEntity = entity_get_prop(Decoys[i], 'm_hThrower')
-					local DecoyOwnerName = string_upper(entity_get_player_name(DecoyOwnerEntity))
-					local RenderTextString
+		local Grenade = Grenades[i]
+		local GrenadeEntity = entity_get_all(GrenadeNetvar[Grenade].Netvar)
 
-					if DecoyOwnerEntity == entity_get_local_player() then
-						RenderTextString = 'YOUR'
-					elseif not entity_is_enemy(DecoyOwnerEntity) then
-						RenderTextString = 'TEAMMATE  ' .. DecoyOwnerName
-					elseif entity_is_enemy(DecoyOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
-						RenderTextString = 'ENEMY  ' .. DecoyOwnerName
-					end
+		for i=1, #GrenadeEntity do
+			local GrenadeOriginX, GrenadeOriginY, GrenadeOriginZ = entity_get_origin(GrenadeEntity[i])
+			local WorldX, WorldY = renderer.world_to_screen(GrenadeOriginX, GrenadeOriginY, GrenadeOriginZ)
+			if WorldX ~= nil then
+				local GrenadeOwnerEntity = entity_get_prop(GrenadeEntity[i], 'm_hOwnerEntity')
+				local GrenadeOwnerName = string_upper(entity_get_player_name(GrenadeOwnerEntity))
 
-					if RenderTextString ~= nil then
-						renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
-						if not isGrenadeESPOn then
-							renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'DECOY')
-						end
-					end
+				local StringToRender = nil
+
+				if GrenadeOwnerEntity == entity_get_local_player() then
+					StringToRender = 'YOUR'
+				elseif not entity_is_enemy(GrenadeOwnerEntity) then
+					StringToRender = 'TEAMMATE  ' .. GrenadeOwnerName
+				elseif entity_is_enemy(GrenadeOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
+					StringToRender = 'ENEMY  ' .. GrenadeOwnerName
 				end
-			end
-		end
 
-		-- Smoke Grenades
-		if Grenades[i] == 'Smoke' then
-			local Smokes = entity_get_all('CSmokeGrenadeProjectile')
-			for i=1, #Smokes do
-				local SmokeOriginX, SmokeOriginY, SmokeOriginZ = entity_get_origin(Smokes[i])
-				local WorldX, WorldY = renderer_world_to_screen(SmokeOriginX, SmokeOriginY, SmokeOriginZ)
-				if WorldX ~= nil then
-					local SmokeOwnerEntity = entity_get_prop(Smokes[i], 'm_hThrower')
-					local SmokeOwnerName = string_upper(entity_get_player_name(SmokeOwnerEntity))
-					local RenderTextString
-
-					if SmokeOwnerEntity == entity_get_local_player() then
-						RenderTextString = 'YOUR'
-					elseif not entity_is_enemy(SmokeOwnerEntity) then
-						RenderTextString = 'TEAMMATE  ' .. SmokeOwnerName
-					elseif entity_is_enemy(SmokeOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
-						RenderTextString = 'ENEMY  ' .. SmokeOwnerName
-					end
-
-					if RenderTextString ~= nil then
-						renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
-						if not isGrenadeESPOn then
-							renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'SMOKE')
+				if StringToRender ~= nil then
+					renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, StringToRender)
+					if not ui_get(References.GrenadeESP) then
+						local GrenadeName = string_upper(Grenade)
+						if Grenade == 'Molotov' then
+							GrenadeName = 'MOLLY'
 						end
-					end
-				end
-			end
-		end
-
-		-- Molotov
-		if Grenades[i] == 'Molotov' then
-			-- Molotov Projectile
-			local MolotovProjectice = entity_get_all('CMolotovProjectile')
-			for i=1, #MolotovProjectice do
-				local MolotovOriginX, MolotovOriginY, MolotovOriginZ = entity_get_origin(MolotovProjectice[i])
-				local WorldX, WorldY = renderer_world_to_screen(MolotovOriginX, MolotovOriginY, MolotovOriginZ)
-				if WorldX ~= nil then
-					local MolotovOwnerEntity = entity_get_prop(MolotovProjectice[i], 'm_hThrower')
-					local MolotovOwnerName = string_upper(entity_get_player_name(MolotovOwnerEntity))
-					local RenderTextString
-
-					if MolotovOwnerEntity == entity_get_local_player() then
-						RenderTextString = 'YOUR'
-					elseif not entity_is_enemy(MolotovOwnerEntity) then
-						RenderTextString = 'TEAMMATE  ' .. MolotovOwnerName
-					elseif entity_is_enemy(MolotovOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
-						RenderTextString = 'ENEMY  ' .. MolotovOwnerName
-					end
-
-					if RenderTextString ~= nil then
-						renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
-						if not isGrenadeESPOn then
-							renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'MOLLY')
-						end
-					end
-				end
-			end
-
-			-- Exploded Molotov
-			local Molotov = entity_get_all('CInferno')
-			for i=1, #Molotov do
-				local MolotovOriginX, MolotovOriginY, MolotovOriginZ = entity_get_origin(Molotov[i])
-				local WorldX, WorldY = renderer_world_to_screen(MolotovOriginX, MolotovOriginY, MolotovOriginZ)
-				if WorldX ~= nil then
-					local MolotovOwnerEntity = entity_get_prop(Molotov[i], 'm_hOwnerEntity')
-					local MolotovOwnerName = string_upper(entity_get_player_name(MolotovOwnerEntity))
-					local RenderTextString
-
-					if MolotovOwnerEntity == entity_get_local_player() then
-						RenderTextString = 'YOUR'
-					elseif not entity_is_enemy(MolotovOwnerEntity) then
-						RenderTextString = 'TEAMMATE  ' .. MolotovOwnerName
-					elseif entity_is_enemy(MolotovOwnerEntity) and ui_get(GrenadeOwner.EnemyName) then
-						RenderTextString = 'ENEMY  ' .. MolotovOwnerName
-					end
-
-					if RenderTextString ~= nil then
-						renderer_text(WorldX, WorldY, 255, 255, 255, 255, '-c', 0, RenderTextString)
-						if not isGrenadeESPOn then
-							renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, 'MOLLY')
-						end
+						renderer_text(WorldX, WorldY+12, 255, 255, 255, 255, '-c', 0, GrenadeName)
 					end
 				end
 			end
@@ -148,14 +77,13 @@ GrenadeOwner.DrawOwnerName = function ()
 end
 
 ui.set_callback(GrenadeOwner.Enabled, function (itemNumber)
-	-- Get grenade owner state
 	local isGrenadeOwnerEnabled = ui_get(itemNumber)
 
-	-- Handle menu items
+	-- Handle menu items visibility
 	ui_set_visible(GrenadeOwner.Grenades, isGrenadeOwnerEnabled)
 	ui_set_visible(GrenadeOwner.EnemyName, isGrenadeOwnerEnabled)
 
-	-- Handle main function
+	-- Handle grenade owner drawing function
 	if isGrenadeOwnerEnabled then
 		client_set_event_callback('paint', GrenadeOwner.DrawOwnerName)
 	else
