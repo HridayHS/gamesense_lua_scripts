@@ -8,32 +8,25 @@ local renderer_text, renderer_world_to_screen = renderer.text, renderer.world_to
 local ui_get, ui_set_visible = ui.get, ui.set_visible
 
 local References = {
-	GrenadeESP = ui.reference('VISUALS', 'Other ESP', 'Grenades')
+	GrenadeESP = ui.reference('Visuals', 'Other ESP', 'Grenades')
 }
 
 local GrenadeOwner = {
-	Label = ui.new_label('Lua', 'A', 'Grenade Owner'),
-	Enabled = ui.new_checkbox('Lua', 'A', 'Enabled'),
-	Grenades = ui.new_multiselect('Lua', 'A', 'Grenades', 'Decoy', 'Smoke', 'Molotov'),
-	EnemyName = ui.new_checkbox('Lua', 'A', 'Show enemy name'),
+	Enabled = ui.new_checkbox('Visuals', 'Other ESP', 'Grenade owner name'),
+	Grenades = ui.new_multiselect('Visuals', 'Other ESP', 'Grenades', 'Decoy', 'Smoke', 'Molotov'),
+	EnemyName = ui.new_checkbox('Visuals', 'Other ESP', 'Show enemy grenade name'),
 }
 
 ui_set_visible(GrenadeOwner.Grenades, false)
 ui_set_visible(GrenadeOwner.EnemyName, false)
 
 local GrenadeNetvar = {
-	['Decoy'] = {
-		Netvar = 'CDecoyProjectile'
-	},
-	['Smoke'] = {
-		Netvar = 'CSmokeGrenadeProjectile'
-	},
-	['Molotov'] = {
-		Netvar = 'CInferno'
-	}
+	['Decoy'] = { Netvar = 'CDecoyProjectile' },
+	['Smoke'] = { Netvar = 'CSmokeGrenadeProjectile' },
+	['Molotov'] = { Netvar = 'CInferno' }
 }
 
-GrenadeOwner.DrawOwnerName = function ()
+GrenadeOwner.DrawName = function ()
 	local Grenades = ui_get(GrenadeOwner.Grenades)
 
 	if #Grenades == 0 then
@@ -85,8 +78,8 @@ ui.set_callback(GrenadeOwner.Enabled, function (itemNumber)
 
 	-- Handle grenade owner drawing function
 	if isGrenadeOwnerEnabled then
-		client_set_event_callback('paint', GrenadeOwner.DrawOwnerName)
+		client_set_event_callback('paint', GrenadeOwner.DrawName)
 	else
-		client_unset_event_callback('paint', GrenadeOwner.DrawOwnerName)
+		client_unset_event_callback('paint', GrenadeOwner.DrawName)
 	end
 end)
