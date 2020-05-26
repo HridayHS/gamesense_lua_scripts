@@ -20,10 +20,10 @@ local GrenadeOwner = {
 ui_set_visible(GrenadeOwner.Grenades, false)
 ui_set_visible(GrenadeOwner.EnemyName, false)
 
-local GrenadeNetvar = {
-	['Decoy'] = { Netvar = 'CDecoyProjectile' },
-	['Smoke'] = { Netvar = 'CSmokeGrenadeProjectile' },
-	['Molotov'] = { Netvar = 'CInferno' }
+local GrenadeNetprop = {
+	['Decoy'] = { Netprop = 'CDecoyProjectile' },
+	['Smoke'] = { Netprop = 'CSmokeGrenadeProjectile' },
+	['Molotov'] = { Netprop = 'CInferno' }
 }
 
 GrenadeOwner.DrawName = function ()
@@ -35,7 +35,7 @@ GrenadeOwner.DrawName = function ()
 
 	for i=1, #Grenades do
 		local Grenade = Grenades[i]
-		local GrenadeEntity = entity_get_all(GrenadeNetvar[Grenade].Netvar)
+		local GrenadeEntity = entity_get_all(GrenadeNetprop[Grenade].Netprop)
 
 		for i=1, #GrenadeEntity do
 			local GrenadeOriginX, GrenadeOriginY, GrenadeOriginZ = entity_get_origin(GrenadeEntity[i])
