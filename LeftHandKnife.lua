@@ -1,22 +1,20 @@
-local client_exec, client_set_event_callback, client_unset_event_callback = client.exec, client.set_event_callback, client.unset_event_callback
-local entity_get_classname, entity_get_local_player, entity_get_player_weapon = entity.get_classname, entity.get_local_player, entity.get_player_weapon
-local ui_get = ui.get
+local entity_is_alive, entity_get_prop, entity_get_classname, entity_get_local_player, entity_get_player_weapon = entity.is_alive, entity.get_prop, entity.get_classname, entity.get_local_player, entity.get_player_weapon
 
 local LeftHandKnife = {
-	Enabled = ui.new_checkbox('Lua', 'B', 'Left Hand Knife'),
-	Main = function()
-		if entity_get_classname(entity_get_player_weapon(entity_get_local_player())) == 'CKnife' then
-			client_exec('cl_righthand 0')
+	Enabled = ui.new_checkbox('Misc', 'Miscellaneous', 'Left hand knife'),
+	Main = function ()
+		if entity_get_classname(entity_get_player_weapon(entity_is_alive(entity_get_local_player()) and entity_get_local_player() or entity_get_prop(entity_get_local_player(), 'm_hObserverTarget'))) == 'CKnife' then
+			cvar.cl_righthand:set_int(0)
 		else
-			client_exec('cl_righthand 1')
+			cvar.cl_righthand:set_int(1)
 		end
 	end
 }
 
-ui.set_callback(LeftHandKnife.Enabled, function(item)
-	if ui_get(item) then
-		client_set_event_callback('setup_command', LeftHandKnife.Main)
+ui.set_callback(LeftHandKnife.Enabled, function (item)
+	if ui.get(item) then
+		client.set_event_callback('net_update_start', LeftHandKnife.Main)
 	else
-		client_unset_event_callback('setup_command', LeftHandKnife.Main)
+		client.unset_event_callback('net_update_start', LeftHandKnife.Main)
 	end
 end)
