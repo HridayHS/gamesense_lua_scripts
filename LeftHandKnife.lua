@@ -13,8 +13,8 @@ local LeftHandKnife = {
 
 ui.set_callback(LeftHandKnife.Enabled, function (item)
 	if ui.get(item) then
-		client.set_event_callback('net_update_start', LeftHandKnife.Main)
+		client.set_event_callback('pre_render', LeftHandKnife.Main)
 	else
-		client.unset_event_callback('net_update_start', LeftHandKnife.Main)
+		client.unset_event_callback('pre_render', LeftHandKnife.Main)
 	end
 end)
