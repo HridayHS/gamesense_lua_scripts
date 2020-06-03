@@ -2,8 +2,7 @@ local client_exec = client.exec
 local ui_get = ui.get
 
 local Autobuy = {
-	Label = ui.new_label('Lua', 'B', 'Autobuy'),
-	Enabled = ui.new_checkbox('Lua', 'B', 'Enabled'),
+    Enabled = ui.new_checkbox('Lua', 'B', 'Autobuy'),
 	PrimaryWeapon = ui.new_combobox('Lua', 'B', 'Primary weapon', 'Off', 'MAC-10 | MP9', 'MP7 | MP5-SD', 'UMP-45', 'P90', 'PP-Bizon', 'Galil AR | FAMAS', 'AK-47 | M4A4 | M4A1-S', 'SSG 08', 'AUG', 'AWP', 'G3SG1 | SCAR-20', 'Nova', 'XM1014', 'Sawed-Off | MAG-7', 'M249', 'Negev'),
 	SecondaryWeapon = ui.new_combobox('Lua', 'B', 'Secondary weapon', 'Off', 'Glock-18 | P2000 | USP-S', 'Dual Berettas', 'P250', 'CZ75-Auto | Five-SeveN | Tec-9', 'Desert Eagle | R8 Revolver'),
 	Armor = ui.new_combobox('Lua', 'B', 'Armor', 'Off', 'Kevlar', 'Kevlar + Helmet'),
