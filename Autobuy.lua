@@ -1,5 +1,5 @@
 local client_exec = client.exec
-local ui_get = ui.get
+local ui_get, ui_set = ui.get, ui.set
 
 local Autobuy = {
     Enabled = ui.new_checkbox('Lua', 'B', 'Autobuy'),
@@ -10,6 +10,27 @@ local Autobuy = {
 	Utility = ui.new_multiselect('Lua', 'B', 'Utility', 'Defuser', 'Taser')
 }
 
+Autobuy.PreConfigs = {
+	['Auto'] = { PrimaryWeapon = 'G3SG1 | SCAR-20', SecondaryWeapon = 'Dual Berettas' },
+	['Scout'] = { PrimaryWeapon = 'SSG 08', SecondaryWeapon = 'Desert Eagle | R8 Revolver' },
+	['AWP'] = { PrimaryWeapon = 'AWP', SecondaryWeapon = 'Desert Eagle | R8 Revolver' }
+}
+
+for key, value in pairs(Autobuy.PreConfigs) do
+	local PrimaryWeapon = value.PrimaryWeapon
+	local SecondaryWeapon = value.SecondaryWeapon
+
+	local UI_ButtonName = key .. ' HvH'
+
+	Autobuy.PreConfigs[key] = ui.new_button('Lua', 'B', UI_ButtonName, function ()
+		ui_set(Autobuy.PrimaryWeapon, PrimaryWeapon)
+		ui_set(Autobuy.SecondaryWeapon, SecondaryWeapon)
+		ui_set(Autobuy.Armor, 'Kevlar + Helmet')
+		ui_set(Autobuy.Grenades, 'HE Grenade', 'Smoke Grenade', 'Molotov')
+		ui_set(Autobuy.Utility, 'Utility', 'Defuser', 'Taser')
+	end)
+end
+
 local function HandleMenuItems()
 	local isEnabled = ui.get(Autobuy.Enabled)
 	ui.set_visible(Autobuy.PrimaryWeapon, isEnabled)
@@ -17,6 +38,11 @@ local function HandleMenuItems()
 	ui.set_visible(Autobuy.Armor, isEnabled)
 	ui.set_visible(Autobuy.Utility, isEnabled)
 	ui.set_visible(Autobuy.Grenades, isEnabled)
+
+	-- Pre-config Buttons
+	ui.set_visible(Autobuy.PreConfigs['Auto'], isEnabled)
+	ui.set_visible(Autobuy.PreConfigs['Scout'], isEnabled)
+	ui.set_visible(Autobuy.PreConfigs['AWP'], isEnabled)
 end
 ui.set_callback(Autobuy.Enabled, HandleMenuItems)
 HandleMenuItems()
@@ -58,7 +84,6 @@ client.set_event_callback('round_prestart', function ()
 	    return
 	end
 
-		-- Weapons & Armor
 	for key, value in pairs(Autobuy) do
 		-- Weapon & Armor
 		if key == 'PrimaryWeapon' or key == 'SecondaryWeapon' or key == 'Armor' then
