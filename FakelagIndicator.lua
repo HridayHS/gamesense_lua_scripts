@@ -1,4 +1,3 @@
-local getChokedcommands = globals.chokedcommands
 local entity_get_prop, entity_get_game_rules = entity.get_prop, entity.get_game_rules
 local renderer_circle_outline, renderer_line, renderer_text = renderer.circle_outline, renderer.line, renderer.text
 local ui_get = ui.get
@@ -20,7 +19,7 @@ local CIRCLE_RADIUS = 10
 local FAKELAG_LIMIT
 local chokedCommands, chokedCommandsToRender = 0, 0
 
-local getCirclePos = function (chokedCommandsToRender)
+local function getCirclePos()
 	if chokedCommandsToRender == 0 then
 		return -90
 	end
@@ -44,15 +43,16 @@ local getCirclePos = function (chokedCommandsToRender)
 	end
 end
 
-client.set_event_callback('paint', function ()
-	-- Chokedcommands
-	if getChokedcommands() < chokedCommands then
+client.set_event_callback('setup_command', function (e)
+	local getChokedCommands = e.chokedcommands
+	if getChokedCommands < chokedCommands then
 		chokedCommandsToRender = chokedCommands
+		CIRCLE_POS = SCREEN_MIDDLE + getCirclePos()
 	end
-	chokedCommands = getChokedcommands()
-	
-	CIRCLE_POS = SCREEN_MIDDLE + getCirclePos(chokedCommandsToRender)
+	chokedCommands = getChokedCommands
+end)
 
+client.set_event_callback('paint', function ()
 	renderer_line(SCREEN_MIDDLE-100, SCREEN_BOTTOM, CIRCLE_POS-CIRCLE_RADIUS, SCREEN_BOTTOM, 255, 255, 255, 255) -- Line 1 before circle
 	renderer_line(CIRCLE_POS+CIRCLE_RADIUS, SCREEN_BOTTOM, SCREEN_MIDDLE+100, SCREEN_BOTTOM, 255, 255, 255, 255) -- Line 2 after circle
 
