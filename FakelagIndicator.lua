@@ -102,7 +102,7 @@ local function on_paint()
 	renderer_circle_outline(CIRCLE_POS, SCREEN_BOTTOM, CIRCLE_COLOR[1], CIRCLE_COLOR[2], CIRCLE_COLOR[3], CIRCLE_COLOR[4], CIRCLE_RADIUS, 0, 1.0, 1)
 
 	if ui_get(Indicator.DisplayFakelagValue) then
-		renderer_text(CIRCLE_POS, SCREEN_BOTTOM, FAKELAG_VALUE_COLOR[1], FAKELAG_VALUE_COLOR[2], FAKELAG_VALUE_COLOR[3], FAKELAG_VALUE_COLOR[4], 'cb', 0, chokedCommandsToRender)
+		renderer_text(CIRCLE_POS, SCREEN_BOTTOM, FAKELAG_VALUE_COLOR[1], FAKELAG_VALUE_COLOR[2], FAKELAG_VALUE_COLOR[3], FAKELAG_VALUE_COLOR[4], 'c', 0, chokedCommandsToRender)
 	end
 end
 
