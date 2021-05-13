@@ -1,10 +1,9 @@
 local client_set_event_callback, client_unset_event_callback = client.set_event_callback, client.unset_event_callback
-local entity_get_prop, entity_get_game_rules = entity.get_prop, entity.get_game_rules
+local entity_get_prop, entity_get_game_rules, entity_get_local_player, entity_is_alive = entity.get_prop, entity.get_game_rules, entity.get_local_player, entity.is_alive
 local renderer_circle_outline, renderer_line, renderer_text = renderer.circle_outline, renderer.line, renderer.text
 local ui_get, ui_set, ui_set_visible = ui.get, ui.set, ui.set_visible
 
 local FakelagLimit = ui.reference('AA', 'Fake lag', 'Limit')
-local x, y = client.screen_size()
 
 local Indicator = {
 	Enabled = ui.new_checkbox('AA', 'Fake lag', 'Indicator'),
@@ -15,6 +14,8 @@ local Indicator = {
 	CircleColorLabel = ui.new_label('AA', 'Fake lag', 'Circle color'),
 	CircleColor = ui.new_color_picker('AA', 'Fake lag', 'Circle color', 255, 255, 255, 255),
 }
+
+local x, y = client.screen_size()
 
 local SCREEN_MIDDLE = x / 2
 local SCREEN_BOTTOM = y - 15
@@ -96,6 +97,10 @@ local function on_setup_command(e)
 end
 
 local function on_paint()
+	if not entity_is_alive(entity_get_local_player()) then
+		return
+	end
+
 	renderer_line(SCREEN_MIDDLE-LINE_WIDTH, SCREEN_BOTTOM, CIRCLE_POS-CIRCLE_RADIUS, SCREEN_BOTTOM, LINE_COLOR[1], LINE_COLOR[2], LINE_COLOR[3], LINE_COLOR[4]) -- Line 1 before circle
 	renderer_line(CIRCLE_POS+CIRCLE_RADIUS, SCREEN_BOTTOM, SCREEN_MIDDLE+LINE_WIDTH, SCREEN_BOTTOM, LINE_COLOR[1], LINE_COLOR[2], LINE_COLOR[3], LINE_COLOR[4]) -- Line 2 after circle
 
