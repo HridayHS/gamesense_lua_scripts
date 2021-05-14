@@ -4,6 +4,7 @@ local renderer_circle_outline, renderer_line, renderer_text = renderer.circle_ou
 local ui_get, ui_set, ui_set_visible = ui.get, ui.set, ui.set_visible
 
 local FakelagLimit = ui.reference('AA', 'Fake lag', 'Limit')
+local OnShotAA = { ui.reference('AA', 'Other', 'On shot anti-aim') }
 
 local Indicator = {
 	Enabled = ui.new_checkbox('AA', 'Fake lag', 'Indicator'),
@@ -13,6 +14,10 @@ local Indicator = {
 	FakelagValueColor = ui.new_color_picker('AA', 'Fake lag', 'Fakelag value color', 255, 255, 255, 255),
 	CircleColorLabel = ui.new_label('AA', 'Fake lag', 'Circle color'),
 	CircleColor = ui.new_color_picker('AA', 'Fake lag', 'Circle color', 255, 255, 255, 255),
+	OnShotAAIndicator = ui.new_checkbox('AA', 'Fake lag', 'On shot anti-aim indicator'),
+	OnShotAAIndicatorColor = ui.new_color_picker('AA', 'Fake lag', 'On shot anti-aim indicator color', 255, 255, 255, 255),
+	OnShotAAIndicatorLineColorLabel = ui.new_label('AA', 'Fake lag', 'Line color'),
+	OnShotAAIndicatorLineColor = ui.new_color_picker('AA', 'Fake lag', 'On shot anti-aim indicator line color', 255, 255, 255, 255)
 }
 
 local x, y = client.screen_size()
@@ -85,6 +90,31 @@ ui.set_callback(Indicator.CircleColor, function (itemNumber)
 		CIRCLE_COLOR[i] = circleColor[i]
 	end
 end)
+
+ui_set(Indicator.OnShotAAIndicator, true)
+
+local function onShotAAIndicatorItemHandler()
+	local isOnShotAAIndicatorOn = ui_get(Indicator.OnShotAAIndicator)
+	ui_set_visible(Indicator.OnShotAAIndicatorLineColorLabel, isOnShotAAIndicatorOn)
+	ui_set_visible(Indicator.OnShotAAIndicatorLineColor, isOnShotAAIndicatorOn)
+end
+ui.set_callback(Indicator.OnShotAAIndicator, onShotAAIndicatorItemHandler)
+
+local ONSHOT_AA_INDICATOR_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.OnShotAAIndicatorColor, function (itemNumber)
+	local onShotAAIndicatorColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		ONSHOT_AA_INDICATOR_COLOR[i] = onShotAAIndicatorColor[i]
+	end
+end)
+
+local ONSHOT_AA_INDICATOR_LINE_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.OnShotAAIndicatorLineColor, function (itemNumber)
+	local onShotAAIndicatorLineColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		ONSHOT_AA_INDICATOR_LINE_COLOR[i] = onShotAAIndicatorLineColor[i]
+	end
+end)
 --
 
 local function on_setup_command(e)
@@ -109,6 +139,13 @@ local function on_paint()
 	if ui_get(Indicator.DisplayFakelagValue) then
 		renderer_text(CIRCLE_POS, SCREEN_BOTTOM, FAKELAG_VALUE_COLOR[1], FAKELAG_VALUE_COLOR[2], FAKELAG_VALUE_COLOR[3], FAKELAG_VALUE_COLOR[4], 'c', 0, chokedCommandsToRender)
 	end
+
+	if ui_get(Indicator.OnShotAAIndicator) then
+		if ui_get(OnShotAA[1]) and ui_get(OnShotAA[2]) then -- Check if On shot anti-aim is on
+			renderer_line(CIRCLE_POS, SCREEN_BOTTOM-10, CIRCLE_POS, SCREEN_BOTTOM-20, ONSHOT_AA_INDICATOR_LINE_COLOR[1], ONSHOT_AA_INDICATOR_LINE_COLOR[2], ONSHOT_AA_INDICATOR_LINE_COLOR[3], ONSHOT_AA_INDICATOR_LINE_COLOR[4])
+			renderer_text(CIRCLE_POS, SCREEN_BOTTOM-25, ONSHOT_AA_INDICATOR_COLOR[1], ONSHOT_AA_INDICATOR_COLOR[2], ONSHOT_AA_INDICATOR_COLOR[3], ONSHOT_AA_INDICATOR_COLOR[4], 'c', 0, 'OSAA')
+		end
+	end
 end
 
 local function IndicatorItemHandler()
@@ -117,6 +154,7 @@ local function IndicatorItemHandler()
 	for key, value in pairs(Indicator) do
 		if key ~= 'Enabled' then
 			ui_set_visible(value, isIndicatorEnabled)
+			onShotAAIndicatorItemHandler()
 		end
 	end
 
