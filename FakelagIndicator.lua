@@ -93,9 +93,9 @@ end)
 ui_set(Indicator.OnShotAAIndicator, true)
 
 local function onShotAAIndicatorItemHandler()
-	local isOnShotAAIndicatorOn = ui_get(Indicator.OnShotAAIndicator)
-	ui_set_visible(Indicator.OnShotAAIndicatorLineColorLabel, isOnShotAAIndicatorOn)
-	ui_set_visible(Indicator.OnShotAAIndicatorLineColor, isOnShotAAIndicatorOn)
+	local onShotAAIndicatorVisibility = ui_get(Indicator.Enabled) and ui_get(Indicator.OnShotAAIndicator)
+	ui_set_visible(Indicator.OnShotAAIndicatorLineColorLabel, onShotAAIndicatorVisibility)
+	ui_set_visible(Indicator.OnShotAAIndicatorLineColor, onShotAAIndicatorVisibility)
 end
 ui.set_callback(Indicator.OnShotAAIndicator, onShotAAIndicatorItemHandler)
 
