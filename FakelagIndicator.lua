@@ -62,7 +62,6 @@ ui_set(Indicator.Enabled, true)
 
 ui.set_callback(Indicator.LineWidth, function (itemNumber)
 	LINE_WIDTH = ui_get(itemNumber) * 50
-	CIRCLE_POS = SCREEN_MIDDLE + getCirclePos()
 end)
 
 local LINE_COLOR = {255, 255, 255, 255}
@@ -141,7 +140,7 @@ local function on_paint()
 	end
 
 	if ui_get(Indicator.OnShotAAIndicator) then
-		if ui_get(OnShotAA[1]) and ui_get(OnShotAA[2]) then -- Check if On shot anti-aim is on
+		if ui_get(OnShotAA[1]) and ui_get(OnShotAA[2]) then -- Check if on shot anti-aim is on
 			renderer_line(CIRCLE_POS, SCREEN_BOTTOM-10, CIRCLE_POS, SCREEN_BOTTOM-20, ONSHOT_AA_INDICATOR_LINE_COLOR[1], ONSHOT_AA_INDICATOR_LINE_COLOR[2], ONSHOT_AA_INDICATOR_LINE_COLOR[3], ONSHOT_AA_INDICATOR_LINE_COLOR[4])
 			renderer_text(CIRCLE_POS, SCREEN_BOTTOM-25, ONSHOT_AA_INDICATOR_COLOR[1], ONSHOT_AA_INDICATOR_COLOR[2], ONSHOT_AA_INDICATOR_COLOR[3], ONSHOT_AA_INDICATOR_COLOR[4], 'c', 0, 'OSAA')
 		end
@@ -154,9 +153,11 @@ local function IndicatorItemHandler()
 	for key, value in pairs(Indicator) do
 		if key ~= 'Enabled' then
 			ui_set_visible(value, isIndicatorEnabled)
-			onShotAAIndicatorItemHandler()
 		end
 	end
+
+	-- Call it every time with master switch so it can retain its original visibility state
+	onShotAAIndicatorItemHandler()
 
 	if isIndicatorEnabled then
 		client_set_event_callback('paint', on_paint)
