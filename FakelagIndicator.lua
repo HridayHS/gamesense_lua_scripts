@@ -1,3 +1,5 @@
+local math_max = math.max
+
 local client_set_event_callback, client_unset_event_callback = client.set_event_callback, client.unset_event_callback
 local database_read, database_write = database.read, database.write
 local entity_get_prop, entity_get_game_rules, entity_get_local_player, entity_is_alive = entity.get_prop, entity.get_game_rules, entity.get_local_player, entity.is_alive
@@ -51,7 +53,7 @@ local function getCirclePos()
 
 	local INTIAL_POSITION = (LINE_WIDTH-10) / FAKELAG_LIMIT_IN_HALF
 	
-	local POSITION_TO_RENDER = chokedCommandsToRender * INTIAL_POSITION
+	local POSITION_TO_RENDER =  chokedCommandsToRender * INTIAL_POSITION
 	
 	if chokedCommandsToRender <= FAKELAG_LIMIT_IN_HALF then
 		return (-LINE_WIDTH+10) + POSITION_TO_RENDER
@@ -173,48 +175,3 @@ end
 ui.set_callback(Indicator.Enabled, IndicatorItemHandler)
 
 IndicatorItemHandler()
-
--- Database
-local function INDICATOR_DB_WRITE_FUNC()
-	database_write('HS_FAKELAG_INDICATOR', {
-		LineWidth = LINE_WIDTH,
-		LineColor = LINE_COLOR,
-		FakelagValueColor = FAKELAG_VALUE_COLOR,
-		CircleColor = CIRCLE_COLOR,
-		OnShotAAIndicatorColor = ONSHOT_AA_INDICATOR_COLOR,
-		OnShotAAIndicatorLineColor = ONSHOT_AA_INDICATOR_LINE_COLOR
-	})
-end
-
--- Events to write database function
-client_set_event_callback('post_config_save', INDICATOR_DB_WRITE_FUNC)
-
-local function INDICATOR_DB_READ_FUNC()
-	local INDICATOR_DB = database_read('HS_FAKELAG_INDICATOR')
-
-	if not INDICATOR_DB then
-		return
-	end
-
-	-- Set item values
-	for key, value in pairs(INDICATOR_DB) do
-		if type(value) == 'table' then
-			ui_set(Indicator[key], value[1], value[2], value[3], value[4])
-		else 
-			ui_set(Indicator[key], value / 50)
-		end
-	end
-
-	-- Variables values
-	LINE_WIDTH = INDICATOR_DB.LineWidth
-	LINE_COLOR = INDICATOR_DB.LineColor
-	FAKELAG_VALUE_COLOR = INDICATOR_DB.FakelagValueColor
-	CIRCLE_COLOR = INDICATOR_DB.CircleColor
-	ONSHOT_AA_INDICATOR_COLOR = INDICATOR_DB.OnShotAAIndicatorColor
-	ONSHOT_AA_INDICATOR_LINE_COLOR = INDICATOR_DB.OnShotAAIndicatorLineColor
-end
-
--- Events to read database
-client_set_event_callback('post_config_load', INDICATOR_DB_READ_FUNC)
-
-INDICATOR_DB_READ_FUNC()
