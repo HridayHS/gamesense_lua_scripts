@@ -39,11 +39,13 @@ local function getCirclePos()
 		return (-LINE_WIDTH+10)
 	end
 
-	if entity_get_prop(entity_get_game_rules(), 'm_bIsValveDS') == 1 then
-		FAKELAG_LIMIT = 6
-	else
-		FAKELAG_LIMIT = ui_get(FakelagLimit)
-	end
+	-- Determine max chokedcommand
+	local m_bIsValveDS = entity_get_prop(entity_get_game_rules(), 'm_bIsValveDS') == 1
+	local UIFakelagLimit = ui_get(FakelagLimit)
+	
+	FAKELAG_LIMIT = chokedCommandsToRender > UIFakelagLimit and chokedCommandsToRender
+		or m_bIsValveDS and UIFakelagLimit >= 6 and '6'
+		or UIFakelagLimit
 
 	local FAKELAG_LIMIT_IN_HALF = FAKELAG_LIMIT / 2
 
