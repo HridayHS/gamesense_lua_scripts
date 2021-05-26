@@ -4,7 +4,7 @@ local table_insert = table.insert
 local x, y = client.screen_size()
 
 local Width = (x / 2)+6
-local Height = (y / 2)-6
+local Height = (y / 2)+6
 
 local indicators = {}
 
@@ -26,7 +26,8 @@ client.set_event_callback('paint', function ()
 		local text = indicator.text
 		local r, g, b, a = indicator.r, indicator.g, indicator.b, indicator.a
 
-		renderer_text(Width, Height+(i*12), r, g, b, a, nil, 0, text)
+		local textH = (i * -12) + (#indicators * 12)
+		renderer_text(Width, Height+textH, r, g, b, a, nil, 0, text)
 
 		indicators[i] = nil
 	end
