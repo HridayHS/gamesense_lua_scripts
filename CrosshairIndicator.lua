@@ -1,8 +1,8 @@
 local curtime = globals.curtime
-local unset_event_callback = client.unset_event_callback
+local key_state, unset_event_callback = client.key_state, client.unset_event_callback
 local render_circle_outline, measure_text, render_text = renderer.circle_outline, renderer.measure_text, renderer.text
 local table_insert = table.insert
-local ui_get = ui.get
+local ui_get, is_menu_open, mouse_position = ui.get, ui.is_menu_open, ui.mouse_position
 
 local x, y = client.screen_size()
 
@@ -31,21 +31,54 @@ local o_cricleThickness = o_circleRadius/2
 local i_circleRadius = o_circleRadius-1
 local i_cricleThickness = (o_circleRadius-1)/3
 
+-- Drag
+local isMoving = false
+local grabX, grabY
+
+local function DragText(textH, m_textW, m_textH, iArrLength)
+	if not is_menu_open() or not key_state(0x01) then
+        isMoving = false
+		return
+	end
+
+	local mX, mY = mouse_position()
+
+	local isTextSelected = (mX >= Width and mX <= (Width+m_textW))
+		and (mY >= textH and mY <= (textH+m_textH))
+
+    if not isTextSelected then
+        return
+    end
+
+    if not isMoving then
+        grabX, grabY = mX - Width, mY - (Height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap))
+        isMoving = true
+    end
+
+    Width, Height = mX-grabX, mY-grabY
+end
+--
+
 -- Main
 client.set_event_callback('paint', function ()
-	for i=1, #indicators do
+	-- Indicators array length
+	local iArrLength = #indicators
+
+	for i=1, iArrLength do
 		local indicator = indicators[i]
 
 		local text = indicator.text
 		local r, g, b, a = indicator.r, indicator.g, indicator.b, indicator.a
 
-		local textH = Height + (i*-indicatorTextGap) + (#indicators*indicatorTextGap)
+		local textH = Height + (i*-indicatorTextGap) + (iArrLength*indicatorTextGap)
+		local m_textW, m_textH = measure_text('d', text)
+
+		-- Drag
+		DragText(textH, m_textW, m_textH, iArrLength)
 
 		render_text(Width, textH, r, g, b, a, 'd', 0, text)
 
 		if isBombBeingPlanted and text:find('Bombsite') then
-			local m_textW, m_textH = measure_text('d', text)
-
 			local cricleW = Width+m_textW+o_circleRadius+4
 			local cricleH = textH+(m_textH/1.71)
 
