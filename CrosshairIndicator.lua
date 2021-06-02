@@ -15,9 +15,9 @@ local TIME_TO_PLANT_BOMB = 3
 local timeAtBombWillBePlanted
 
 local function innerCircleOutlinePercentage()
-    local timeElapsed = (curtime() + TIME_TO_PLANT_BOMB) - timeAtBombWillBePlanted
-    local timeElapsedInPerc = (timeElapsed / TIME_TO_PLANT_BOMB * 100) + 0.5
-    return timeElapsedInPerc * 0.01
+	local timeElapsed = (curtime() + TIME_TO_PLANT_BOMB) - timeAtBombWillBePlanted
+	local timeElapsedInPerc = (timeElapsed / TIME_TO_PLANT_BOMB * 100) + 0.5
+	return timeElapsedInPerc * 0.01
 end
 
 -- Gap between indicators text
@@ -35,27 +35,55 @@ local i_cricleThickness = (o_circleRadius-1)/3
 local isMoving = false
 local grabX, grabY
 
+-- WIP
+local iWidthInPer, iHeightInPer = 51, 50
+local RENDER_TEXT_FLAGS = 'd'
+
+local function UpdateIndicatorTextFlags()
+	if iWidthInPer > 50 then
+		RENDER_TEXT_FLAGS = 'd'
+	elseif iWidthInPer < 50 then
+		RENDER_TEXT_FLAGS = 'dr'
+	elseif iWidthInPer == 50 then
+		RENDER_TEXT_FLAGS = 'dc'
+	end
+end
+-- WIP
+
 local function DragText(textH, m_textW, m_textH, iArrLength)
 	if not is_menu_open() or not key_state(0x01) then
-        isMoving = false
+		isMoving = false
 		return
 	end
 
 	local mX, mY = mouse_position()
 
-	local isTextSelected = (mX >= Width and mX <= (Width+m_textW))
-		and (mY >= textH and mY <= (textH+m_textH))
+	if iWidthInPer > 50 then
+		isTextSelected = (mX >= Width and mX <= (Width+m_textW))
+			and (mY >= textH and mY <= (textH+m_textH))
+	elseif iWidthInPer < 50 then
+		isTextSelected = (mX >= (Width-m_textW) and mX <= Width+15)
+			and (mY >= textH and mY <= (textH+m_textH))
+	elseif iWidthInPer == 50 then
+		isTextSelected = (mX >= (Width-(m_textW/2)) and mX <= (Width+m_textW))
+			and (mY >= textH and mY <= (textH+m_textH))
+	end
 
-    if not isTextSelected then
-        return
-    end
+	if not isTextSelected then
+		return
+	end
 
-    if not isMoving then
-        grabX, grabY = mX - Width, mY - (Height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap))
-        isMoving = true
-    end
+	if not isMoving then
+		grabX, grabY = mX - Width, mY - (Height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap))
+		isMoving = true
+	end
 
-    Width, Height = mX-grabX, mY-grabY
+	Width, Height = mX-grabX, mY-grabY
+
+	-- Update indicator style based on position
+	iWidthInPer = (Width / x) * 100
+	iHeightInPer = ((Height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap)) / y) * 100
+	UpdateIndicatorTextFlags()
 end
 --
 
@@ -70,17 +98,33 @@ client.set_event_callback('paint', function ()
 		local text = indicator.text
 		local r, g, b, a = indicator.r, indicator.g, indicator.b, indicator.a
 
-		local textH = Height + (i*-indicatorTextGap) + (iArrLength*indicatorTextGap)
-		local m_textW, m_textH = measure_text('d', text)
+		local textH
+		if iHeightInPer >= 50 then
+			textH = Height + (i*-indicatorTextGap) + (iArrLength*indicatorTextGap)
+		else
+			textH = Height + (i*-indicatorTextGap)
+		end
+		
+		local m_textW, m_textH = measure_text(RENDER_TEXT_FLAGS, text)
 
 		-- Drag
 		DragText(textH, m_textW, m_textH, iArrLength)
 
-		render_text(Width, textH, r, g, b, a, 'd', 0, text)
+		render_text(Width, textH, r, g, b, a, RENDER_TEXT_FLAGS, 0, text)
 
 		if isBombBeingPlanted and text:find('Bombsite') then
-			local cricleW = Width+m_textW+o_circleRadius+4
-			local cricleH = textH+(m_textH/1.71)
+			local cricleW, cricleH
+
+			if RENDER_TEXT_FLAGS == 'd' then
+				cricleW = Width+m_textW+o_circleRadius+4
+				cricleH = textH+(m_textH/1.71)
+			elseif RENDER_TEXT_FLAGS == 'dr' then
+				cricleW = Width+o_circleRadius+4
+				cricleH = textH+(m_textH/1.71)
+			elseif RENDER_TEXT_FLAGS == 'dc' then
+				cricleW = Width+(m_textW/2)+o_circleRadius+4
+				cricleH = textH
+			end
 
 			render_circle_outline(cricleW, cricleH, 0, 0, 0, 200, o_circleRadius, 0, 1.0, o_cricleThickness)
 			render_circle_outline(cricleW, cricleH, 255, 255, 255, 200, i_circleRadius, 0, innerCircleOutlinePercentage(), i_cricleThickness)
@@ -92,12 +136,12 @@ client.set_event_callback('paint', function ()
 end)
 
 client.set_event_callback('bomb_beginplant', function ()
-    timeAtBombWillBePlanted = curtime() + TIME_TO_PLANT_BOMB
-    isBombBeingPlanted = true
+	timeAtBombWillBePlanted = curtime() + TIME_TO_PLANT_BOMB
+	isBombBeingPlanted = true
 end)
 
 client.set_event_callback('bomb_abortplant', function ()
-    isBombBeingPlanted = false
+	isBombBeingPlanted = false
 end)
 
 client.set_event_callback('bomb_planted', function ()
