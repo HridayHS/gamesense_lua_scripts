@@ -2,7 +2,7 @@ local curtime = globals.curtime
 local key_state, unset_event_callback = client.key_state, client.unset_event_callback
 local render_circle_outline, measure_text, render_text = renderer.circle_outline, renderer.measure_text, renderer.text
 local table_insert = table.insert
-local ui_get, is_menu_open, mouse_position = ui.get, ui.is_menu_open, ui.mouse_position
+local ui_get, is_menu_open, menu_position, menu_size, mouse_position = ui.get, ui.is_menu_open, ui.menu_position, ui.menu_size, ui.mouse_position
 
 local x, y = client.screen_size()
 
@@ -11,64 +11,68 @@ local height = (y / 2)+6
 
 local indicators = {}
 
-local TIME_TO_PLANT_BOMB = 3
-local timeAtBombWillBePlanted
-
-local function innerCircleOutlinePercentage()
-	local timeElapsed = (curtime() + TIME_TO_PLANT_BOMB) - timeAtBombWillBePlanted
-	local timeElapsedInPerc = (timeElapsed / TIME_TO_PLANT_BOMB * 100) + 0.5
-	return timeElapsedInPerc * 0.01
+-- Override default indicators
+local function indicatorCallback(indicator)
+	table_insert(indicators, indicator)
 end
 
--- Gap between indicators text
-local indicatorTextGap = 12
+client.set_event_callback('indicator', indicatorCallback)
 
--- Outer circle
-local o_circleRadius = 6
-local o_cricleThickness = o_circleRadius/2
+-- Unset custom indicator event callback on shutdown event.
+client.set_event_callback('shutdown', function ()
+	unset_event_callback('indicator', indicatorCallback)
+end)
+--
 
--- Inner circle
-local i_circleRadius = o_circleRadius-1
-local i_cricleThickness = (o_circleRadius-1)/3
-
--- Drag
+-- Drag support
 local isMoving = false
 local grabX, grabY
 
--- WIP
 local iWidthInPer, iHeightInPer = 51, 50
 local renderTextFlags = 'd'
 
 local function updateIndicatorTextFlags()
 	if iWidthInPer > 50 then
-		renderTextFlags = 'd'
+		renderTextFlags = 'd' -- Uncentered text
 	elseif iWidthInPer < 50 then
-		renderTextFlags = 'dr'
+		renderTextFlags = 'dr' -- Right-aligned text
 	elseif iWidthInPer == 50 then
-		renderTextFlags = 'dc'
+		renderTextFlags = 'dc' -- Centered text
 	end
 end
--- WIP
 
-local function dragText(textH, m_textW, m_textH, iArrLength)
+local function dragText(textH, m_textW, m_textH, indicatorTextGap, iArrLength)
 	if not is_menu_open() or not key_state(0x01) then
 		isMoving = false
 		return
 	end
 
+	-- Mouse x and y cordinates
 	local mX, mY = mouse_position()
 
-	if iWidthInPer > 50 then
+	local menuX, menuY = menu_position()
+	local menuW, menuH = menu_size()
+
+	local isMenuSelected = (mX >= menuX and mX <= (menuX+menuW))
+		and (mY >= menuY and mY <= (menuY+menuH))
+
+	-- Return if menu is selected.
+	if isMenuSelected then
+		return
+	end
+
+	if iWidthInPer > 50 then -- Is indicators on left side of the screen.
 		isTextSelected = (mX >= width and mX <= (width+m_textW))
 			and (mY >= textH and mY <= (textH+m_textH))
-	elseif iWidthInPer < 50 then
-		isTextSelected = (mX >= (width-m_textW) and mX <= width+15)
+	elseif iWidthInPer < 50 then -- Is indicators on right side of the screen.
+		isTextSelected = (mX >= (width-m_textW) and mX <= width)
 			and (mY >= textH and mY <= (textH+m_textH))
-	elseif iWidthInPer == 50 then
+	elseif iWidthInPer == 50 then -- Or if indicators are in the middle of the screen.
 		isTextSelected = (mX >= (width-(m_textW/2)) and mX <= (width+m_textW))
 			and (mY >= textH and mY <= (textH+m_textH))
 	end
 
+	-- Return if indicators are not selected.
 	if not isTextSelected then
 		return
 	end
@@ -78,6 +82,7 @@ local function dragText(textH, m_textW, m_textH, iArrLength)
 		isMoving = true
 	end
 
+	-- Update width and height
 	width, height = mX-grabX, mY-grabY
 
 	-- Update indicator style based on position
@@ -88,6 +93,25 @@ end
 --
 
 -- Main
+local indicatorTextGap = 12 -- Gap between indicators
+
+-- Bomb planting timer outer circle arguments
+local o_circleRadius = 6
+local o_cricleThickness = o_circleRadius/2
+
+-- Bomb planting timer inner circle arguments
+local i_circleRadius = o_circleRadius-1
+local i_cricleThickness = (o_circleRadius-1)/3
+
+local TIME_TO_PLANT_BOMB = 3
+local timeAtBombWillBePlanted
+
+local function innerCircleOutlinePercentage()
+	local timeElapsed = (curtime() + TIME_TO_PLANT_BOMB) - timeAtBombWillBePlanted
+	local timeElapsedInPerc = (timeElapsed / TIME_TO_PLANT_BOMB * 100) + 0.5
+	return timeElapsedInPerc * 0.01
+end
+
 client.set_event_callback('paint', function ()
 	-- Indicators array length
 	local iArrLength = #indicators
@@ -107,11 +131,13 @@ client.set_event_callback('paint', function ()
 		
 		local m_textW, m_textH = measure_text(renderTextFlags, text)
 
-		-- Drag
-		dragText(textH, m_textW, m_textH, iArrLength)
+		-- Drag support
+		dragText(textH, m_textW, m_textH, indicatorTextGap, iArrLength)
 
+		-- Render indicator
 		render_text(width, textH, r, g, b, a, renderTextFlags, 0, text)
 
+		-- Draw planting c4 timer
 		if isBombBeingPlanted and text:find('Bombsite') then
 			local cricleW, cricleH
 
@@ -147,18 +173,7 @@ end)
 client.set_event_callback('bomb_planted', function ()
 	isBombBeingPlanted = false
 end)
-
 --
-local function indicatorCallback(indicator)
-	table_insert(indicators, indicator)
-end
-
-client.set_event_callback('indicator', indicatorCallback)
-
--- Unset indicator event callback on shutdown event.
-client.set_event_callback('shutdown', function ()
-	unset_event_callback('indicator', indicatorCallback)
-end)
 
 -- DPI Support
 local DPI_SCALE = ui.reference('Misc', 'Settings', 'DPI scale')
