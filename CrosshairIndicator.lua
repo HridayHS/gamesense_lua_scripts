@@ -6,8 +6,8 @@ local ui_get, is_menu_open, mouse_position = ui.get, ui.is_menu_open, ui.mouse_p
 
 local x, y = client.screen_size()
 
-local Width = (x / 2)+6
-local Height = (y / 2)+6
+local width = (x / 2)+6
+local height = (y / 2)+6
 
 local indicators = {}
 
@@ -37,20 +37,20 @@ local grabX, grabY
 
 -- WIP
 local iWidthInPer, iHeightInPer = 51, 50
-local RENDER_TEXT_FLAGS = 'd'
+local renderTextFlags = 'd'
 
-local function UpdateIndicatorTextFlags()
+local function updateIndicatorTextFlags()
 	if iWidthInPer > 50 then
-		RENDER_TEXT_FLAGS = 'd'
+		renderTextFlags = 'd'
 	elseif iWidthInPer < 50 then
-		RENDER_TEXT_FLAGS = 'dr'
+		renderTextFlags = 'dr'
 	elseif iWidthInPer == 50 then
-		RENDER_TEXT_FLAGS = 'dc'
+		renderTextFlags = 'dc'
 	end
 end
 -- WIP
 
-local function DragText(textH, m_textW, m_textH, iArrLength)
+local function dragText(textH, m_textW, m_textH, iArrLength)
 	if not is_menu_open() or not key_state(0x01) then
 		isMoving = false
 		return
@@ -59,13 +59,13 @@ local function DragText(textH, m_textW, m_textH, iArrLength)
 	local mX, mY = mouse_position()
 
 	if iWidthInPer > 50 then
-		isTextSelected = (mX >= Width and mX <= (Width+m_textW))
+		isTextSelected = (mX >= width and mX <= (width+m_textW))
 			and (mY >= textH and mY <= (textH+m_textH))
 	elseif iWidthInPer < 50 then
-		isTextSelected = (mX >= (Width-m_textW) and mX <= Width+15)
+		isTextSelected = (mX >= (width-m_textW) and mX <= width+15)
 			and (mY >= textH and mY <= (textH+m_textH))
 	elseif iWidthInPer == 50 then
-		isTextSelected = (mX >= (Width-(m_textW/2)) and mX <= (Width+m_textW))
+		isTextSelected = (mX >= (width-(m_textW/2)) and mX <= (width+m_textW))
 			and (mY >= textH and mY <= (textH+m_textH))
 	end
 
@@ -74,16 +74,16 @@ local function DragText(textH, m_textW, m_textH, iArrLength)
 	end
 
 	if not isMoving then
-		grabX, grabY = mX - Width, mY - (Height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap))
+		grabX, grabY = mX - width, mY - (height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap))
 		isMoving = true
 	end
 
-	Width, Height = mX-grabX, mY-grabY
+	width, height = mX-grabX, mY-grabY
 
 	-- Update indicator style based on position
-	iWidthInPer = (Width / x) * 100
-	iHeightInPer = ((Height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap)) / y) * 100
-	UpdateIndicatorTextFlags()
+	iWidthInPer = (width / x) * 100
+	iHeightInPer = ((height + (iArrLength*-indicatorTextGap) + (iArrLength*indicatorTextGap)) / y) * 100
+	updateIndicatorTextFlags()
 end
 --
 
@@ -100,29 +100,29 @@ client.set_event_callback('paint', function ()
 
 		local textH
 		if iHeightInPer >= 50 then
-			textH = Height + (i*-indicatorTextGap) + (iArrLength*indicatorTextGap)
+			textH = height + (i*-indicatorTextGap) + (iArrLength*indicatorTextGap)
 		else
-			textH = Height + (i*-indicatorTextGap)
+			textH = height + (i*-indicatorTextGap)
 		end
 		
-		local m_textW, m_textH = measure_text(RENDER_TEXT_FLAGS, text)
+		local m_textW, m_textH = measure_text(renderTextFlags, text)
 
 		-- Drag
-		DragText(textH, m_textW, m_textH, iArrLength)
+		dragText(textH, m_textW, m_textH, iArrLength)
 
-		render_text(Width, textH, r, g, b, a, RENDER_TEXT_FLAGS, 0, text)
+		render_text(width, textH, r, g, b, a, renderTextFlags, 0, text)
 
 		if isBombBeingPlanted and text:find('Bombsite') then
 			local cricleW, cricleH
 
-			if RENDER_TEXT_FLAGS == 'd' then
-				cricleW = Width+m_textW+o_circleRadius+4
+			if renderTextFlags == 'd' then
+				cricleW = width+m_textW+o_circleRadius+4
 				cricleH = textH+(m_textH/1.71)
-			elseif RENDER_TEXT_FLAGS == 'dr' then
-				cricleW = Width+o_circleRadius+4
+			elseif renderTextFlags == 'dr' then
+				cricleW = width+o_circleRadius+4
 				cricleH = textH+(m_textH/1.71)
-			elseif RENDER_TEXT_FLAGS == 'dc' then
-				cricleW = Width+(m_textW/2)+o_circleRadius+4
+			elseif renderTextFlags == 'dc' then
+				cricleW = width+(m_textW/2)+o_circleRadius+4
 				cricleH = textH
 			end
 
@@ -131,7 +131,7 @@ client.set_event_callback('paint', function ()
 		end
 	end
 
-	-- Reset indicator table
+	-- Reset indicators table
 	indicators = {}
 end)
 
@@ -149,14 +149,15 @@ client.set_event_callback('bomb_planted', function ()
 end)
 
 --
-local function IndicatorCallback(indicator)
+local function indicatorCallback(indicator)
 	table_insert(indicators, indicator)
 end
 
-client.set_event_callback('indicator', IndicatorCallback)
+client.set_event_callback('indicator', indicatorCallback)
 
+-- Unset indicator event callback on shutdown event.
 client.set_event_callback('shutdown', function ()
-	unset_event_callback('indicator', IndicatorCallback)
+	unset_event_callback('indicator', indicatorCallback)
 end)
 
 -- DPI Support
@@ -170,7 +171,7 @@ local DPI_SCALE_SETTINGS = {
 	['200%'] = { indicatorTextGap = 20, o_circleRadius = 10 }
 }
 
-local function DPI_SCALE_HANDLER()
+local function DPIScaleHandler()
 	local DPI = ui_get(DPI_SCALE)
 
 	-- Update local variables --
@@ -183,6 +184,6 @@ local function DPI_SCALE_HANDLER()
 	i_cricleThickness = (o_circleRadius-1)/3
 end
 
-ui.set_callback(DPI_SCALE, DPI_SCALE_HANDLER)
+ui.set_callback(DPI_SCALE, DPIScaleHandler)
 
-DPI_SCALE_HANDLER()
+DPIScaleHandler()
