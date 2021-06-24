@@ -121,13 +121,9 @@ local function on_weapon_config_toggle()
 
 	ui_set_visible(config_ref, isWeaponConfigsEnabled)
 	
-	if isWeaponConfigsEnabled then
-		client.set_event_callback('setup_command', on_setup_command)
-		client.set_event_callback('pre_config_save', on_pre_config_save)	
-	else
-		client.unset_event_callback('setup_command', on_setup_command)
-		client.unset_event_callback('pre_config_save', on_pre_config_save)
-	end
+	local event_callback = isWeaponConfigsEnabled and client.set_event_callback or client.unset_event_callback
+	event_callback('setup_command', on_setup_command)
+	event_callback('pre_config_save', on_setup_command)
 end
 
 --------------------------------------------------------------------------------
