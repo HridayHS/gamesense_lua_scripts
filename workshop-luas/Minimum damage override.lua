@@ -14,12 +14,12 @@ for i=1, 26 do
 	damage_overrides[100+i] = 'HP + ' .. i
 end
 
-local enable_ref = ui.new_checkbox('Rage', 'Other', 'Minimum damage override')
-local indicator_ref = ui.new_color_picker('Rage', 'Other', 'Indicator color', 255, 255, 255, 255)
+local enable_ref = ui.new_checkbox('RAGE', 'Other', 'Minimum damage override')
+local indicator_ref = ui.new_color_picker('RAGE', 'Other', 'Indicator color', 255, 255, 255, 255)
 
-local restore_dmamage_ref = ui.new_slider('Rage', 'Other', 'Restore damage', 0, 126, 10, true, nil, 1, damage_overrides)
-local override_damage_ref = ui.new_slider('Rage', 'Other', 'Override damage', 0, 126, 101, true, nil, 1, damage_overrides)
-local override_hk_ref = ui.new_hotkey('Rage', 'Other', 'Damage override hotkey', true)
+local restore_dmamage_ref = ui.new_slider('RAGE', 'Other', 'Restore damage', 0, 126, 10, true, nil, 1, damage_overrides)
+local override_damage_ref = ui.new_slider('RAGE', 'Other', 'Override damage', 0, 126, 101, true, nil, 1, damage_overrides)
+local override_hk_ref = ui.new_hotkey('RAGE', 'Other', 'Damage override hotkey', true)
 
 --------------------------------------------------------------------------------
 -- Callback functions

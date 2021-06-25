@@ -9,7 +9,7 @@ local ui_get, ui_set, ui_set_visible = ui.get,  ui.set, ui.set_visible
 --------------------------------------------------------------------------------
 -- Constants and variables
 --------------------------------------------------------------------------------
-local enable_ref = ui.new_checkbox('Rage', 'Other', 'Weapon configs')
+local enable_ref = ui.new_checkbox('RAGE', 'Other', 'Weapon configs')
 local config_ref
 
 local references = {}
@@ -174,7 +174,7 @@ for config_idx=IDX_GLOBAL, #references do
 	save_settings(config_idx)
 end
 
-config_ref = ui.new_combobox('Rage', 'Other', '\nActive config', config_idx_to_name)
+config_ref = ui.new_combobox('RAGE', 'Other', '\nActive config', config_idx_to_name)
 
 -- Enable reference callback
 ui.set_callback(enable_ref, on_weapon_config_toggle)
