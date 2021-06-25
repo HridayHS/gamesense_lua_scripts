@@ -7,7 +7,7 @@ local ui_get, ui_set, ui_set_visible = ui.get, ui.set, ui.set_visible
 --------------------------------------------------------------------------------
 -- Constants and variables
 --------------------------------------------------------------------------------
-local min_damage_ref = ui.reference('Rage', 'Aimbot', 'Minimum damage')
+local min_damage_ref = ui.reference('RAGE', 'Aimbot', 'Minimum damage')
 
 local damage_overrides = { [0] = 'Auto' }
 for i=1, 26 do
