@@ -104,6 +104,10 @@ local function on_pre_config_save()
 	save_settings(active_config_idx)
 end
 
+local function on_pre_config_load()
+    active_config_idx = nil
+end
+
 local function on_config_select(ref)
 	-- Return if local player is alive
 	if is_alive(get_local_player()) then
@@ -182,6 +186,8 @@ config_ref = ui.new_combobox('RAGE', 'Other', '\nActive config', config_idx_to_n
 -- Enable reference callback
 ui.set_callback(enable_ref, on_weapon_config_toggle)
 on_weapon_config_toggle()
+
+set_event_callback("pre_config_load", on_pre_config_load)
 
 -- Update the active config idx when the script is loaded and on combobox select.
 ui.set_callback(config_ref, on_config_select)
