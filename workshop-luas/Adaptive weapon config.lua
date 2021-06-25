@@ -77,7 +77,6 @@ end
 
 local function init_setting(tab, container, name, setting_key, default_value)
 	local ref_successful, ref = pcall(ui.reference, tab, container, name)
-	print(ref_successful, ' ', name)
 	if ref_successful then
 		references_builtin[setting_key] = ref
 		for config_idx=IDX_GLOBAL, #config_idx_to_settings do
@@ -124,7 +123,7 @@ local function on_weapon_config_toggle()
 	
 	local event_callback = isWeaponConfigsEnabled and client.set_event_callback or client.unset_event_callback
 	event_callback('setup_command', on_setup_command)
-	event_callback('pre_config_save', on_setup_command)
+	event_callback('pre_config_save', on_pre_config_save)
 end
 
 --------------------------------------------------------------------------------
