@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 -- Cache common functions
 --------------------------------------------------------------------------------
+local set_event_callback, unset_event_callback = client.set_event_callback, client.unset_event_callback
 local render_indicator = renderer.indicator
 local ui_get, ui_set, ui_set_visible = ui.get, ui.set, ui.set_visible
 
@@ -15,7 +16,9 @@ for i=1, 26 do
 end
 
 local enable_ref = ui.new_checkbox('RAGE', 'Other', 'Minimum damage override')
-local indicator_ref = ui.new_color_picker('RAGE', 'Other', 'Indicator color', 255, 255, 255, 255)
+
+local r, g, b, a = 255, 255, 255, 255
+local indicator_ref = ui.new_color_picker('RAGE', 'Other', 'Indicator color', r, g, b, a)
 
 local restore_dmamage_ref = ui.new_slider('RAGE', 'Other', 'Restore damage', 0, 126, 10, true, nil, 1, damage_overrides)
 local override_damage_ref = ui.new_slider('RAGE', 'Other', 'Override damage', 0, 126, 101, true, nil, 1, damage_overrides)
@@ -24,9 +27,12 @@ local override_hk_ref = ui.new_hotkey('RAGE', 'Other', 'Damage override hotkey',
 --------------------------------------------------------------------------------
 -- Callback functions
 --------------------------------------------------------------------------------
+ui.set_callback(indicator_ref, function (reference)
+	r, g, b, a = ui_get(reference)
+end)
+
 local function on_paint()
 	if ui_get(override_hk_ref) then
-		local r, g, b, a = ui_get(indicator_ref)
 		render_indicator(r, g, b, a, 'Damage: ', ui_get(min_damage_ref))
 	end
 end
@@ -43,13 +49,9 @@ local function on_override_damage_toggle()
 	ui_set_visible(override_damage_ref, isMinimumDamageOverrideEnabled)
 	ui_set_visible(override_hk_ref, isMinimumDamageOverrideEnabled)
 
-	if isMinimumDamageOverrideEnabled then
-		client.set_event_callback('setup_command', on_setup_command)
-		client.set_event_callback('paint', on_paint)
-	else
-		client.unset_event_callback('setup_command', on_setup_command)
-		client.unset_event_callback('paint', on_paint)
-	end
+	local event_callback = isMinimumDamageOverrideEnabled and set_event_callback or unset_event_callback
+	event_callback('setup_command', on_setup_command)
+	event_callback('paint', on_paint)
 end
 
 ui.set_callback(enable_ref, on_override_damage_toggle)
