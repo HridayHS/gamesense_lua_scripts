@@ -2,6 +2,7 @@
 -- Cache common functions
 --------------------------------------------------------------------------------
 local bit_band = bit.band
+local set_event_callback, unset_event_callback = client.set_event_callback, client.unset_event_callback
 local get_local_player, get_player_weapon, get_prop, is_alive = entity.get_local_player, entity.get_player_weapon, entity.get_prop, entity.is_alive
 local json_parse, json_stringify = json.parse, json.stringify
 local ui_get, ui_set, ui_set_visible = ui.get,  ui.set, ui.set_visible
@@ -117,11 +118,11 @@ local function on_config_select(ref)
 end
 
 local function on_weapon_config_toggle()
-	local isWeaponConfigsEnabled = ui_get(enable_ref)
+	local isAdaptiveWeaponOn = ui_get(enable_ref)
 
-	ui_set_visible(config_ref, isWeaponConfigsEnabled)
+	ui_set_visible(config_ref, isAdaptiveWeaponOn)
 	
-	local event_callback = isWeaponConfigsEnabled and client.set_event_callback or client.unset_event_callback
+	local event_callback = isAdaptiveWeaponOn and set_event_callback or unset_event_callback
 	event_callback('setup_command', on_setup_command)
 	event_callback('pre_config_save', on_pre_config_save)
 end
