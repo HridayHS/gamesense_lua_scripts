@@ -77,6 +77,7 @@ end
 
 local function init_setting(tab, container, name, setting_key, default_value)
 	local ref_successful, ref = pcall(ui.reference, tab, container, name)
+	print(ref_successful, ' ', name)
 	if ref_successful then
 		references_builtin[setting_key] = ref
 		for config_idx=IDX_GLOBAL, #config_idx_to_settings do
@@ -161,7 +162,9 @@ init_setting('Rage', 'Other', 'Quick stop options', 'quick_stop_options')
 init_setting('Rage', 'Other', 'Prefer body aim', 'prefer_baim')
 init_setting('Rage', 'Other', 'Prefer body aim disablers', 'prefer_baim_disablers')
 init_setting('Rage', 'Other', 'Force body aim on peek', 'force_baim_peek')
-init_setting('AA', 'Other', 'On shot anti-aim', 'on_shot_aa')
+init_setting('Rage', 'Other', 'Double tap mode', 'dt_mode')
+init_setting('Rage', 'Other', 'Double tap hit chance', 'dt_hit_chance')
+init_setting('Rage', 'Other', 'Double tap quick stop', 'dt_quick_stop')
 
 client.delay_call(0, function ()
 	init_setting('Rage', 'Other', 'Minimum damage override', 'damage_override_enable')
