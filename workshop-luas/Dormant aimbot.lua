@@ -1,7 +1,8 @@
-local math_max, string_format = math.max, string.format
+local bit_band, bit_lshift = bit.band, bit.lshift
+local math_max, math_sqrt, string_format = math.max, math.sqrt, string.format
 
 local client_eye_position, client_log, client_trace_bullet, client_visible = client.eye_position, client.log, client.trace_bullet, client.visible
-local entity_get_bounding_box, entity_get_local_player, entity_get_origin, entity_get_player_resource, entity_get_player_weapon, entity_get_prop, entity_is_alive, entity_is_dormant, entity_is_enemy = entity.get_bounding_box, entity.get_local_player, entity.get_origin, entity.get_player_resource, entity.get_player_weapon, entity.get_prop, entity.is_alive, entity.is_dormant, entity.is_enemy
+local entity_get_bounding_box, entity_get_local_player, entity_get_origin, entity_get_player_name, entity_get_player_resource, entity_get_player_weapon, entity_get_prop, entity_is_alive, entity_is_dormant, entity_is_enemy = entity.get_bounding_box, entity.get_local_player, entity.get_origin, entity.get_player_name, entity.get_player_resource, entity.get_player_weapon, entity.get_prop, entity.is_alive, entity.is_dormant, entity.is_enemy
 local globals_maxplayers, globals_tickcount, globals_tickinterval = globals.maxplayers, globals.tickcount, globals.tickinterval
 local plist_get = plist.get
 local render_indicator = renderer.indicator
@@ -24,7 +25,7 @@ local ref = {
 local menu = {
 	dormant_switch = ui.new_checkbox('RAGE', 'Aimbot', 'Dormant aimbot'),
 	dormant_key = ui.new_hotkey('RAGE', 'Aimbot', 'Dormant aimbot', true),
-	dormant_mindmg = ui.new_slider('RAGE', 'Aimbot', 'Dormant minimum damage', 0, 100, 10, true),
+	dormant_mindmg_slider = ui.new_slider('RAGE', 'Aimbot', 'Dormant minimum damage', 0, 100, 10, true),
 	dormant_indicator = ui.new_checkbox('RAGE', 'Aimbot', 'Dormant indicator'),
 	dormant_aimbot_requirements = {
 		ui.new_label('RAGE', 'Aimbot', 'Visuals->Player ESP->Dormant: Off'),
@@ -34,11 +35,15 @@ local menu = {
 	}
 }
 
+-- Default dormant mininum damage
+menu.dormant_mindmg = 10
+
 local player_info_prev = {}
-local roundStarted = 0
+local round_started = 0
 
 local function modify_velocity(e, goalspeed)
-	local minspeed = math.sqrt((e.forwardmove * e.forwardmove) + (e.sidemove * e.sidemove))
+	local minspeed = math_sqrt((e.forwardmove * e.forwardmove) + (e.sidemove * e.sidemove))
+
 	if goalspeed <= 0 or minspeed <= 0 then
 		return
 	end
@@ -64,6 +69,7 @@ local function on_setup_command(cmd)
 	local lp = entity_get_local_player()
 
 	local my_weapon = entity_get_player_weapon(lp)
+
 	if not my_weapon then
 		return
 	end
@@ -78,20 +84,16 @@ local function on_setup_command(cmd)
 		return
 	end
 
-	local tickcount = globals_tickcount()
-	local player_resource = entity_get_player_resource()
-	local eyepos = vector(client_eye_position())
-	local simtime = entity_get_prop(lp, 'm_flSimulationTime')
-	local weapon = weapons(my_weapon)
-	local scoped = entity_get_prop(lp, 'm_bIsScoped') == 1
-	local onground = bit.band(entity_get_prop(lp, 'm_fFlags'), bit.lshift(1, 0))
-
 	-- To prevent shooting at ghost dormant esp @ the beginning of round
-	if tickcount < roundStarted then
+	local tickcount = globals_tickcount()
+	if tickcount < round_started then
 		return
 	end
 
+	local weapon = weapons(my_weapon)
+	local simtime = entity_get_prop(lp, 'm_flSimulationTime')
 	local can_shoot
+
 	if weapon.is_revolver then -- for some reason can_shoot returns always false with r8 despite all 3 props being true, no idea why
 		can_shoot = simtime > entity_get_prop(my_weapon, 'm_flNextPrimaryAttack') -- doing this fixes it ><
 	elseif weapon.is_melee_weapon then
@@ -106,13 +108,13 @@ local function on_setup_command(cmd)
 	-- Loop through all players and continue if they're connected
 	for player=1, globals_maxplayers() do
 		-- If player is not connected skip the loop.
-		if entity_get_prop(player_resource, 'm_bConnected', player) ~= 1 then
+		if entity_get_prop(entity_get_player_resource(), 'm_bConnected', player) ~= 1 then
 			goto skip
 		end
 
 		-- If player is whitelisted skip the loop.
 		if plist_get(player, 'Add to whitelist') then
-				goto skip
+			goto skip
 		end
 
 		if entity_is_enemy(player) and entity_is_dormant(player) then
@@ -128,12 +130,17 @@ local function on_setup_command(cmd)
 				local dormant_accurate = alpha_multiplier > 0.795 -- for debug purposes lower this to 0.1
 
 				if dormant_accurate then
+					local eyepos = vector(client_eye_position())
+
 					local target = origin + vector(0, 0, 40)
 					local pitch, yaw = eyepos:to(target):angles()
 					local ent, dmg = client_trace_bullet(lp, eyepos.x, eyepos.y, eyepos.z, target.x, target.y, target.z, true)
 
-					can_hit = (dmg > ui_get(menu.dormant_mindmg)) and (not client_visible(target.x, target.y, target.z)) -- added visibility check to mitigate shooting at anomalies?
+					can_hit = (dmg > menu.dormant_mindmg) and (not client_visible(target.x, target.y, target.z)) -- added visibility check to mitigate shooting at anomalies?
 					if can_shoot and can_hit and ui_get(menu.dormant_key) then
+						local scoped = entity_get_prop(lp, 'm_bIsScoped') == 1
+						local onground = bit_band(entity_get_prop(lp, 'm_fFlags'), bit_lshift(1, 0))
+
 						modify_velocity(cmd, (scoped and weapon.max_player_speed_alt or weapon.max_player_speed)*0.33)
 
 						-- autoscope
@@ -148,7 +155,7 @@ local function on_setup_command(cmd)
 
 							-- dont shoot again
 							can_shoot = false
-							-- client_log(string_format('Taking a shot at: %s | tickcount: %d | predcited damage: %d | inaccuracy: %.3f | Alpha: %.3f', entity.get_player_name(player), tickcount, dmg, inaccuracy, alpha_multiplier))
+							-- client_log(string_format('Taking a shot at: %s | tickcount: %d | predcited damage: %d | inaccuracy: %.3f | Alpha: %.3f', entity_get_player_name(player), tickcount, dmg, inaccuracy, alpha_multiplier))
 						end
 					end
 				end
@@ -161,9 +168,22 @@ local function on_setup_command(cmd)
 end
 
 client.register_esp_flag('DA', 255, 255, 255, function (player)
-	if ui_get(menu.dormant_switch) and entity.is_enemy(player) and player_info_prev[player] ~= nil and entity_is_alive(entity_get_local_player()) then
-		local _, _, can_hit = unpack(player_info_prev[player])
-		return can_hit
+	-- Return if dormant aimbot is off.
+	if not ui_get(menu.dormant_switch) then
+		return
+	end
+
+	-- Return if local player is not alive.
+	if not entity_is_alive(entity_get_local_player()) then
+		return
+	end
+
+	-- Only draw DA flag on enemies
+	if entity_is_enemy(player) then
+		if player_info_prev[player] then
+			local _, _, can_hit = unpack(player_info_prev[player])
+			return can_hit
+		end
 	end
 end)
 
@@ -193,23 +213,24 @@ local function DAIndicator()
 	render_indicator(colors[1], colors[2], colors[3], colors[4], 'DA')
 end
 
-local function resetter()
-	local freezetime = (cvar.mp_freezetime:get_float()+1) / globals_tickinterval() -- get freezetime plus 1 second and disable dormantbob for that amount of ticks
-	roundStarted = globals_tickcount() + freezetime
+local function get_round_started()
+	local freezetime = (cvar.mp_freezetime:get_float() + 1) / globals_tickinterval() -- get freezetime plus 1 second and disable dormantbob for that amount of ticks
+	round_started = globals_tickcount() + freezetime
 end
 
 local function itemHandler(reference)
 	local itemState = ui_get(reference)
+	local itemName = ui_name(reference)
 
 	-- Return event callback to be used based on itemState
 	local event_callback = itemState and set_event_callback or unset_event_callback
 
 	-- Event callbacks for menu.dormant_switch and menu items aimbot visibility checks
-	if ui_name(reference) == 'Dormant aimbot' then
+	if itemName == ui_name(menu.dormant_switch) then
 		local dormantESPState = ui_get(ref.dormantEsp)
 
 		-- Visibility checks
-		ui_set_visible(menu.dormant_mindmg, itemState and dormantESPState)
+		ui_set_visible(menu.dormant_mindmg_slider, itemState and dormantESPState)
 		ui_set_visible(menu.dormant_indicator, itemState and dormantESPState)
 
 		for i=1, #menu.dormant_aimbot_requirements do
@@ -219,22 +240,31 @@ local function itemHandler(reference)
 
 		-- Callbacks
 		event_callback('setup_command', on_setup_command)
-		event_callback('round_prestart', resetter)
+		event_callback('round_prestart', get_round_started)
+
+		return
+	end
+
+	-- Update dormant minimum damage
+	if itemName == ui_name(menu.dormant_mindmg_slider) then
+		menu.dormant_mindmg = itemState
+		return
 	end
 
 	-- Event callback for menu.dormant_indicator
-	if ui_name(reference) == 'Dormant indicator' then
+	if itemName == ui_name(menu.dormant_indicator) then
 		event_callback('paint', DAIndicator)
 	end
 end
 
 ui.set_callback(menu.dormant_switch, itemHandler)
+ui.set_callback(menu.dormant_mindmg_slider, itemHandler)
 ui.set_callback(menu.dormant_indicator, itemHandler)
 
 -- Set default values for new menu items
 ui.set(menu.dormant_indicator, true)
 
-ui_set_visible(menu.dormant_mindmg, false)
+ui_set_visible(menu.dormant_mindmg_slider, false)
 ui_set_visible(menu.dormant_indicator, false)
 
 for i=1, #menu.dormant_aimbot_requirements do
