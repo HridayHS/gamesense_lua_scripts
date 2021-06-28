@@ -5,7 +5,7 @@ local bit_band = bit.band
 local set_event_callback, unset_event_callback = client.set_event_callback, client.unset_event_callback
 local get_local_player, get_player_weapon, get_prop, is_alive = entity.get_local_player, entity.get_player_weapon, entity.get_prop, entity.is_alive
 local json_parse, json_stringify = json.parse, json.stringify
-local ui_get, ui_set, ui_set_visible = ui.get,  ui.set, ui.set_visible
+local ui_get, ui_new_string, ui_set, ui_set_visible = ui.get, ui.new_string, ui.set, ui.set_visible
 
 --------------------------------------------------------------------------------
 -- Constants and variables
@@ -65,7 +65,7 @@ end
 
 local function init_config(name, ...)
 	local config_idx = #references+1
-	references[config_idx] = ui.new_string(name..' adaptive settings', '{}')
+	references[config_idx] = ui_new_string(name..' adaptive settings', '{}')
 
 	config_name_to_idx[name] = config_idx
 	config_idx_to_name[config_idx] = name
