@@ -1,29 +1,39 @@
+-- dependencies
 local ffi = require 'ffi'
+local csgo_weapons = require 'gamesense/csgo_weapons'
 
+-- caching common functions
+local entity_get_local_player, entity_is_enemy, entity_get_bounding_box, entity_get_all, entity_set_prop, entity_is_alive, entity_get_steam64, entity_get_classname, entity_get_player_resource, entity_get_esp_data, entity_is_dormant, entity_get_player_name, entity_get_game_rules, entity_get_origin, entity_hitbox_position, entity_get_player_weapon, entity_get_players, entity_get_prop = entity.get_local_player, entity.is_enemy, entity.get_bounding_box, entity.get_all, entity.set_prop, entity.is_alive, entity.get_steam64, entity.get_classname, entity.get_player_resource, entity.get_esp_data, entity.is_dormant, entity.get_player_name, entity.get_game_rules, entity.get_origin, entity.hitbox_position, entity.get_player_weapon, entity.get_players, entity.get_prop
+local client_userid_to_entindex, client_draw_hitboxes, client_scale_damage, client_trace_line, client_trace_bullet = client.userid_to_entindex, client.draw_hitboxes, client.scale_damage, client.trace_line, client.trace_bullet
+local materialsystem_get_model_materials = materialsystem.get_model_materials
+local plist_set, plist_get = plist.set, plist.get
+local ffi_cast = ffi.cast
+
+-- ffi typedefs, structs & functions
 local animation_layer_t = ffi.typeof([[
-	struct {										char pad_0x0000[0x18];
+	struct {										char pad0[0x18];
 		uint32_t	sequence;
 		float		prev_cycle;
 		float		weight;
 		float		weight_delta_rate;
 		float		playback_rate;
 		float		cycle;
-		void		*entity;						char pad_0x0038[0x4];
+		void		*entity;						char pad1[0x4];
 	} **
 ]])
 
 local animation_state_t = ffi.typeof([[
-	struct {										char pad_0x0000[0x18];
-		float		anim_update_timer;				char pad_0x001C[0xC];
+	struct {										char pad0[0x18];
+		float		anim_update_timer;				char pad1[0xC];
 		float		started_moving_time;
-		float		last_move_time;					char pad_0x0030[0x10];
-		float		last_lby_time;					char pad_0x0044[0x8];
-		float		run_amount;						char pad_0x0050[0x10];
-		void		*entity;
-		__int32		active_weapon;
-		__int32		last_active_weapon;
+		float		last_move_time;					char pad2[0x10];
+		float		last_lby_time;					char pad3[0x8];
+		float		run_amount;						char pad4[0x10];
+		void*		entity;
+		void*		active_weapon;
+		void*		last_active_weapon;
 		float		last_client_side_animation_update_time;
-		__int32		last_client_side_animation_update_framecount;
+		int			last_client_side_animation_update_framecount;
 		float		eye_timer;
 		float		eye_angles_y;
 		float		eye_angles_x;
@@ -31,17 +41,19 @@ local animation_state_t = ffi.typeof([[
 		float		current_feet_yaw;
 		float		torso_yaw;
 		float		last_move_yaw;
-		float		lean_amount;					char pad_0x0094[0x4];
+		float		lean_amount;					char pad5[0x4];
 		float		feet_cycle;
-		float		feet_yaw_rate;					char pad_0x00A0[0x4];
+		float		feet_yaw_rate;					char pad6[0x4];
 		float		duck_amount;
-		float		landing_duck_amount;			char pad_0x00AC[0x4];
+		float		landing_duck_amount;			char pad7[0x4];
 		float		current_origin[3];
 		float		last_origin[3];
 		float		velocity_x;
-		float		velocity_y;						char pad_0x00D0[0x10];
-		float		move_direction_1;
-		float		move_direction_2;				char pad_0x00E8[0x4];
+		float		velocity_y;						char pad8[0x4];
+		float		unknown_float1;					char pad9[0x8];
+		float		unknown_float2;
+		float		unknown_float3;
+		float		unknown;
 		float		m_velocity;
 		float		jump_fall_velocity;
 		float		clamped_velocity;
@@ -50,284 +62,296 @@ local animation_state_t = ffi.typeof([[
 		float		last_time_started_moving;
 		float		last_time_stopped_moving;
 		bool		on_ground;
-		bool		hit_in_ground_animation;		char pad_0x0110[0x8];
+		bool		hit_in_ground_animation;		char pad10[0x4];
+		float		time_since_in_air;
 		float		last_origin_z;
 		float		head_from_ground_distance_standing;
-		float		stop_to_full_running_fraction;	char pad_0x0120[0x14];
-		__int32 	is_not_moving;					char pad_0x0138[0x20];
-		float		last_anim_update_time;
-		float		moving_direction_x;
-		float		moving_direction_y;
-		float		moving_direction_z;				char pad_0x0168[0x44];
-		__int32 	started_moving;					char pad_0x01B0[0x8];
-		float		lean_yaw;						char pad_0x01BC[0x8];
-		float		poses_speed;					char pad_0x01C8[0x8];
-		float		ladder_speed;					char pad_0x01D4[0x8];
-		float		ladder_yaw;						char pad_0x01E0[0x8];
-		float		some_pose;						char pad_0x01EC[0x14];
-		float		body_yaw;						char pad_0x0204[0x8];
-		float		body_pitch;						char pad_0x0210[0x8];
-		float		death_yaw;						char pad_0x021C[0x8];
-		float		stand;							char pad_0x0228[0x8];
-		float		jump_fall;						char pad_0x0234[0x8];
-		float		aim_blend_stand_idle;			char pad_0x0240[0x8];
-		float		aim_blend_crouch_idle;			char pad_0x024C[0x8];
-		float		strafe_yaw;						char pad_0x0258[0x8];
-		float		aim_blend_stand_walk;			char pad_0x0264[0x8];
-		float		aim_blend_stand_run;			char pad_0x0270[0x8];
-		float		aim_blend_crouch_walk;			char pad_0x027C[0x8];
-		float		move_blend_walk;				char pad_0x0288[0x8];
-		float		move_blend_run;					char pad_0x0294[0x8];
-		float		move_blend_crouch;				char pad_0x02A0[0x4];
-		float		speed;
-		__int32 	moving_in_any_direction;
-		float		acceleration;					char pad_0x02B0[0x74];
-		float		crouch_height;
-		__int32 	is_full_crouched;				char pad_0x032C[0x4];
-		float		velocity_subtract_x;
-		float		velocity_subtract_y;
-		float		velocity_subtract_z;
-		float		standing_head_height;			char pad_0x0340[0x4];
+		float		stop_to_full_running_fraction;	char pad11[0x4];
+		float		magic_fraction;					char pad12[0x3C];
+		float		world_force;					char pad13[0x1CA];
+		float		min_yaw;
+		float		max_yaw;
 	} **
 ]])
 
-local get_weapon_info_t = ffi.typeof([[
-	struct {
-		char	pad_vtable[0x4];
-		char*	consoleName;		char	pad_0[0xc];
-		int		iMaxClip1;
-		int		MaxClip2;
-		int		iDefaultClip1;
-		int 	iDefaultClip2;
-		int		iPrimaryReserveAmmoMax;
-		int		iSecondaryReserveAmmoMax;
-		char*	szWorldModel;
-		char*	szViewModel;
-		char*	szDroppedModel;		char	pad_9[0x50];
-		char*	szHudName;
-		char*	szWeaponName;		char	pad_11[0x2];
-		bool	bIsMeleeWeapon;		char	pad_12[0x9];
-		float	flWeaponWeight;		char	pad_13[0x2c];
-		int		iWeaponType;
-		int		iWeaponPrice;
-		int		iKillAward;			char	pad_16[0x4];
-		float	flCycleTime;
-		float	flCycleTimeAlt;		char	pad_18[0x8];
-		bool	bFullAuto;			char	pad_19[0x3];
-		int		iDamage;
-		float	flArmorRatio;
-		int		iBullets;
-		float	flPenetration;		char	pad_23[0x8];
-		float	flWeaponRange;
-		float	flRangeModifier;
-		float	flThrowVelocity;	char	pad_26[0xc];
-		bool	bHasSilencer;		char	pad_27[0xb];
-		char*	szBulletType;
-		float	flMaxSpeed;
-		float	flMaxSpeedAlt;		char	pad_29[0x50];
-		int		iRecoilSeed;
-	}* (__thiscall*)(void*)
-]])
 
-local get_client_networkable = vtable_bind('client.dll', 'VClientEntityList003', 0, 'void*(__thiscall*)(void*, int)')
-local get_client_entity = vtable_bind('client.dll', 'VClientEntityList003', 3, 'void*(__thiscall*)(void*, int)')
-local get_client_unknown = vtable_thunk(0, 'void*(__thiscall*)(void*)')
-local get_client_renderable = vtable_thunk(5, 'void*(__thiscall*)(void*)')
-local get_model = vtable_thunk(8, 'const void*(__thiscall*)(void*)')
-local get_studio_model = vtable_bind('engine.dll', 'VModelInfoClient004', 32, 'void*(__thiscall*)(void*, const void*)')
-local get_weapon_info = vtable_thunk(460, get_weapon_info_t)
+local native_GetClientNetworkable = vtable_bind('client.dll', 'VClientEntityList003', 0, 'void*(__thiscall*)(void*, int)')
+local native_GetClientEntity = vtable_bind('client.dll', 'VClientEntityList003', 3, 'void*(__thiscall*)(void*, int)')
+local native_GetStudioModel = vtable_bind('engine.dll', 'VModelInfoClient004', 32, 'void*(__thiscall*)(void*, const void*)')
 
-local get_sequence_activity_match = client.find_signature('client_panorama.dll','\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x83') or error('Invalid GetSequenceActivity signature')
-local get_sequence_activity = ffi.cast('int(__fastcall*)(void*, void*, int)', get_sequence_activity_match)
+local native_GetIClientUnknown = vtable_thunk(0, 'void*(__thiscall*)(void*)')
+local native_GetClientRenderable = vtable_thunk(5, 'void*(__thiscall*)(void*)')
+local native_GetBaseEntity = vtable_thunk(7, 'void*(__thiscall*)(void*)')
+local native_GetModel = vtable_thunk(8, 'const void*(__thiscall*)(void*)')
 
-local ent_c = {}
-local ent_mt = {
-	__index = ent_c,
-	__metatable = 'ent'
+local native_GetSequenceActivity_sig = client.find_signature('client.dll','\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x83') or error('invalid GetSequenceActivity signature')
+local native_GetSequenceActivity = ffi.cast('int(__fastcall*)(void*, void*, int)', native_GetSequenceActivity_sig)
+
+local class_ptr = ffi.typeof('void***')
+local char_ptr = ffi.typeof('char*')
+local nullptr = ffi.new('void*')
+
+local entity = {}
+
+local M = {
+	__index = entity,
+	__tostring = function(self)
+		return ('%d'):format(self[0])
+	end,
+	__concat = function(a, b)
+		return ('%s%s'):format(a, b)
+	end,
+	__eq = function(a, b)
+		return a[0] == b[0]
+	end,
+	__metatable = false
 }
 
-local function is_ent(value)
-	return getmetatable(value) == 'ent'
-end
-
-function ent_mt.__call(ent, entindex_new)
-	entindex_new = entindex_new or ent.entindex
-
-	ent.entindex = entindex_new
-end
-
-function ent_mt.__eq(ent_a, ent_b)
-	local a, b = ent_a, ent_b
-
-	if is_ent(ent_a) then
-		a = ent_a.entindex
-	end
-
-	if is_ent(ent_b) then
-		b = ent_b.entindex
-	end
-
-	return a == b
-end
-
-function ent_c.new(entindex)
-	return setmetatable(
+-- functions
+local function entity_new(entindex)
+	return entindex and setmetatable(
 		{
-			entindex = entindex or 0
+			[0] = entindex
 		},
-		ent_mt
+		M
 	)
 end
 
-function ent_mt.__tostring(ent)
-	return string.format('%d', ent.entindex)
-end
-
-function ent_c.get_local_player()
-	return ent_c.new(entity.get_local_player())
-end
-
-function ent_c.get_all(classname)
-	local tbl = {}
-
-	local entities = classname and entity.get_all(classname) or entity.get_all()
-	for i=1, #entities do
-		tbl[i] = ent_c.new(entities[i])
+local function get_model(this)
+	local pNet = ffi_cast(class_ptr, native_GetClientNetworkable(this[0]))
+	if pNet == nullptr then
+		return
 	end
 
-	return tbl
+	local pUnk = ffi_cast(class_ptr, native_GetIClientUnknown(pNet))
+	if pUnk == nullptr then
+		return
+	end
+
+	local pRen = ffi_cast(class_ptr, native_GetClientRenderable(pUnk))
+	if pRen == nullptr then
+		return
+	end
+
+	return native_GetModel(pRen)
 end
 
-function ent_c.get_players(enemies_only)
-	local tbl = {}
+entity.new = entity_new
+
+entity.new_from_userid = function(userid)
+	return entity_new(client_userid_to_entindex(userid))
+end
+
+entity.get_local_player = function()
+	return entity_new(entity_get_local_player())
+end
+
+entity.get_player_resource = function()
+	return entity_new(entity_get_player_resource())
+end
+
+entity.get_game_rules = function()
+	return entity_new(entity_get_game_rules())
+end
+
+entity.get_all = function(...)
+	local ents = entity_get_all(...)
+	for i, entindex in ipairs(ents) do
+		ents[i] = entity_new(entindex)
+	end
+	return ents
+end
+
+entity.get_players = function(...)
+	local ents = entity_get_players(...)
+	for i, entindex in ipairs(ents) do
+		ents[i] = entity_new(entindex)
+	end
+	return ents
+end
+
+entity.get_entindex = function(self)
+	return self[0]
+end
+
+entity.get_player_weapon = function(self)
+	return entity_new(entity_get_player_weapon(self[0]))
+end
+
+entity.is_enemy = function(self)
+	return entity_is_enemy(self[0])
+end
+
+entity.get_bounding_box = function(self)
+	return entity_get_bounding_box(self[0])
+end
+
+entity.set_prop = function(self, ...)
+	return entity_set_prop(self[0], ...)
+end
+
+entity.is_alive = function(self)
+	return entity_is_alive(self[0])
+end
+
+entity.get_steam64 = function(self)
+	return entity_get_steam64(self[0])
+end
+
+entity.get_classname = function(self)
+	return entity_get_classname(self[0])
+end
+
+entity.get_esp_data = function(self)
+	return entity_get_esp_data(self[0])
+end
+
+entity.is_dormant = function(self)
+	return entity_is_dormant(self[0])
+end
+
+entity.get_player_name = function(self)
+	return entity_get_player_name(self[0])
+end
+
+entity.get_origin = function(self)
+	return entity_get_origin(self[0])
+end
+
+entity.hitbox_position = function(self, ...)
+	return entity_hitbox_position(self[0], ...)
+end
+
+entity.get_prop = function(self, ...)
+	return entity_get_prop(self[0], ...)
+end
+
+entity.draw_hitboxes = function(self, ...)
+	return client_draw_hitboxes(self[0], ...)
+end
+
+entity.scale_damage = function(self, ...)
+	return client_scale_damage(self[0], ...)
+end
+
+entity.trace_line = function(self, ...)
+	local fraction, entindex = client_trace_line(self[0], ...)
+
+	return fraction, entity_new(entindex)
+end
+
+entity.trace_bullet = function(self, ...)
+	local entindex, damage = client_trace_bullet(self[0], ...)
+
+	return entity_new(entindex), damage
+end
+
+entity.get_model_materials = function(self)
+	return materialsystem_get_model_materials(self[0])
+end
+
+entity.plist_set = function(self, ...)
+	return plist_set(self[0], ...)
+end
+
+entity.plist_get = function(self, ...)
+	return plist_get(self[0], ...)
+end
+
+entity.get_client_networkable = function(self)
+	return native_GetClientNetworkable(self[0])
+end
+
+entity.get_client_entity = function(self)
+	return native_GetClientEntity(self[0])
+end
+
+entity.get_client_unknown = function(self)
+	local pNet = ffi_cast(class_ptr, native_GetClientNetworkable(self[0]))
+	if pNet == nullptr then
+		return
+	end
 	
-	local players = enemies_only and entity.get_players(enemies_only) or entity.get_players()
-	for i=1, #players do
-		tbl[i] = ent_c.new(players[i])
-	end
-
-	return tbl
+	return native_GetIClientUnknown(pNet)
 end
 
-function ent_c.get_game_rules()
-	return ent_c.new(entity.get_game_rules())
-end
-
-function ent_c.get_player_resource()
-	return ent_c.new(entity.get_player_resource())
-end
-
-function ent_c:get_entindex()
-	return self.entindex
-end
-
-function ent_c:get_classname()
-	return entity.get_classname(self.entindex)
-end
-
-function ent_c:set_prop(propname, value, array_index)
-	if is_ent(array_index) then
-		array_index = array_index.entindex
+entity.get_client_renderable = function(self)
+	local pNet = ffi_cast(class_ptr, native_GetClientNetworkable(self[0]))
+	if pNet == nullptr then
+		return
 	end
 	
-	return array_index and entity.set_prop(self.entindex, propname, value, array_index) or entity.set_prop(self.entindex, propname, value)
+	local pUnk = ffi_cast(class_ptr, native_GetIClientUnknown(pNet))
+	if pUnk == nullptr then
+		return
+	end
+	
+	return native_GetClientRenderable(pUnk)
 end
 
-function ent_c:get_prop(propname, array_index)
-	if is_ent(array_index) then
-		array_index = array_index.entindex
+entity.get_base_entity = function(self)
+	local pNet = ffi_cast(class_ptr, native_GetClientNetworkable(self[0]))
+	if pNet == nullptr then
+		return
 	end
 
-	-- it wouldn't return multiple values otherwise :(
-	if array_index then
-		return entity.get_prop(self.entindex, propname, array_index)
-	else
-		return entity.get_prop(self.entindex, propname)
+	local pUnk = ffi_cast(class_ptr, native_GetIClientUnknown(pNet))
+	if pUnk == nullptr then
+		return
 	end
+	
+	return native_GetBaseEntity(pUnk)
 end
 
-function ent_c:is_enemy()
-	return entity.is_enemy(self.entindex)
-end
-
-function ent_c:is_alive()
-	return entity.is_alive(self.entindex)
-end
-
-function ent_c:is_dormant()
-	return entity.is_dormant(self.entindex)
-end
-
-function ent_c:get_player_name()
-	return entity.get_player_name(self.entindex)
-end
-
-function ent_c:get_player_weapon()
-	return ent_c.new(entity.get_player_weapon(self.entindex))
-end
-
-function ent_c:hitbox_position(hitbox)
-	return entity.hitbox_position(self.entindex, hitbox)
-end
-
-function ent_c:get_steam64()
-	return entity.get_steam64(self.entindex)
-end
-
-function ent_c:get_bounding_box()
-	return entity.get_bounding_box(self.entindex)
-end
-
-function ent_c:get_origin()
-	return entity.get_origin(self.entindex)
-end
-
-function ent_c:get_esp_data()
-	return entity.get_esp_data(self.entindex)
-end
-
-function ent_c:get_client_networkable()
-	return get_client_networkable(self.entindex)
-end
-
-function ent_c:get_client_entity()
-	return get_client_entity(self.entindex)
-end
-
-function ent_c:get_model()
-	local client_ptr = ffi.cast('void***', self:get_client_networkable())
-	local unknown_ptr = ffi.cast('void***', get_client_unknown(client_ptr))
-	local renderable_ptr = ffi.cast('void***', get_client_renderable(unknown_ptr))
-
-	return get_model(renderable_ptr)
-end
-
-function ent_c:get_sequence_activity(sequence)
-	local hdr = get_studio_model(self:get_model())
+entity.get_sequence_activity = function(self, sequence)
+	local hdr = native_GetStudioModel(get_model(self))
 
 	if not hdr then
 		return -1
 	end
 
-	return get_sequence_activity(self:get_client_entity(), hdr, sequence)
+	return native_GetSequenceActivity(native_GetClientEntity(self[0]), hdr, sequence)
 end
 
-function ent_c:get_anim_overlay(layer) -- (*(animation_layer_t)((char*)ent_ptr + 0x2980))[layer]
-	local ent_ptr = ffi.cast('void***', self:get_client_entity())
+entity.get_anim_overlay = function(self, layer) -- (*(animation_layer_t)((char*)ent_ptr + 0x2980))[layer]
+	layer = layer or 1
 
-	return ffi.cast(animation_layer_t, ffi.cast('char*', ent_ptr) + 0x2980)[0][layer] 
+	local pEnt = ffi_cast(class_ptr, native_GetClientEntity(self[0]))
+	if pEnt == nullptr then
+		return
+	end
+
+	return ffi_cast(animation_layer_t, ffi_cast(char_ptr, pEnt) + 0x2980)[0][layer] 
 end
 
-function ent_c:get_anim_state() -- (*(animation_state_t)((char*)ent_ptr + 0x3914))
-	local ent_ptr = ffi.cast('void***', self:get_client_entity())
+entity.get_anim_state = function(self) -- (*(animation_state_t)((char*)ent_ptr + 0x3914))
+	local pEnt = ffi_cast(class_ptr, native_GetClientEntity(self[0]))
+	if pEnt == nullptr then
+		return
+	end
 
-	return ffi.cast(animation_state_t, ffi.cast('char*', ent_ptr) + 0x3914)[0]
+	return ffi_cast(animation_state_t, ffi_cast(char_ptr, pEnt) + 0x3914)[0]
 end
 
-function ent_c:get_weapon_info()
-	local ent_ptr = ffi.cast('void***', self:get_client_entity())
-
-	return get_weapon_info(ent_ptr)
+entity.get_weapon_info = function(self)
+	local idx = entity_get_prop(self[0], 'm_iItemDefinitionIndex')
+	
+	return csgo_weapons[idx]
 end
 
-return ent_c
+setmetatable(
+	entity,
+	{
+		__call = function(self, entindex)
+			return entindex and setmetatable(
+				{
+					[0] = entindex
+				},
+				M
+			)
+		end,
+		__metatable = false
+	}
+)
+
+return entity
