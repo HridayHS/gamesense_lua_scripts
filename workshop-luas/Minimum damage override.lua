@@ -33,7 +33,8 @@ end)
 
 local function on_paint()
 	if ui_get(override_hk_ref) then
-		render_indicator(r, g, b, a, 'Damage: ', ui_get(min_damage_ref))
+		local min_damage = ui_get(min_damage_ref)
+		render_indicator(r, g, b, a, 'Damage: ', damage_overrides[min_damage] or min_damage)
 	end
 end
 
