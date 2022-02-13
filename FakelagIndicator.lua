@@ -4,7 +4,7 @@ local client_set_event_callback, client_unset_event_callback = client.set_event_
 local database_read, database_write = database.read, database.write
 local entity_get_prop, entity_get_game_rules, entity_get_local_player, entity_is_alive = entity.get_prop, entity.get_game_rules, entity.get_local_player, entity.is_alive
 local renderer_circle_outline, renderer_line, renderer_text = renderer.circle_outline, renderer.line, renderer.text
-local ui_get, ui_set, ui_set_visible = ui.get, ui.set, ui.set_visible
+local ui_get, ui_name, ui_set, ui_set_visible = ui.get, ui.name, ui.set, ui.set_visible
 
 local FakelagLimit = ui.reference('AA', 'Fake lag', 'Limit')
 local OnShotAA = { ui.reference('AA', 'Other', 'On shot anti-aim') }
@@ -36,6 +36,53 @@ local CIRCLE_RADIUS = 10
 local FAKELAG_LIMIT = 6
 local chokedCommands, chokedCommandsToRender = 0, 0
 
+--
+ui.set_callback(Indicator.LineWidth, function (itemNumber)
+	LINE_WIDTH = ui_get(itemNumber) * 50
+end)
+
+local LINE_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.LineColor, function (itemNumber)
+	local lineColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		LINE_COLOR[i] = lineColor[i]
+	end
+end)
+
+local FAKELAG_VALUE_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.FakelagValueColor, function (itemNumber)
+	local fakelagValueColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		FAKELAG_VALUE_COLOR[i] = fakelagValueColor[i]
+	end
+end)
+
+local CIRCLE_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.CircleColor, function (itemNumber)
+	local circleColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		CIRCLE_COLOR[i] = circleColor[i]
+	end
+end)
+
+local ONSHOT_AA_INDICATOR_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.OnShotAAIndicatorColor, function (itemNumber)
+	local onShotAAIndicatorColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		ONSHOT_AA_INDICATOR_COLOR[i] = onShotAAIndicatorColor[i]
+	end
+end)
+
+local ONSHOT_AA_INDICATOR_LINE_COLOR = {255, 255, 255, 255}
+ui.set_callback(Indicator.OnShotAAIndicatorLineColor, function (itemNumber)
+	local onShotAAIndicatorLineColor = { ui_get(itemNumber) }
+	for i=1, 4 do
+		ONSHOT_AA_INDICATOR_LINE_COLOR[i] = onShotAAIndicatorLineColor[i]
+	end
+end)
+--
+
+--
 local function getCirclePos()
 	if chokedCommandsToRender == 0 then
 		return (-LINE_WIDTH+10)
@@ -61,65 +108,6 @@ local function getCirclePos()
 		return POSITION_TO_RENDER - (LINE_WIDTH-10)
 	end
 end
-
---
-ui_set(Indicator.Enabled, true)
-
-ui.set_callback(Indicator.LineWidth, function (itemNumber)
-	LINE_WIDTH = ui_get(itemNumber) * 50
-end)
-
-local LINE_COLOR = {255, 255, 255, 255}
-ui.set_callback(Indicator.LineColor, function (itemNumber)
-	local lineColor = { ui_get(itemNumber) }
-	for i=1, 4 do
-		LINE_COLOR[i] = lineColor[i]
-	end
-end)
-
-ui_set(Indicator.DisplayFakelagValue, true)
-
-local FAKELAG_VALUE_COLOR = {255, 255, 255, 255}
-ui.set_callback(Indicator.FakelagValueColor, function (itemNumber)
-	local fakelagValueColor = { ui_get(itemNumber) }
-	for i=1, 4 do
-		FAKELAG_VALUE_COLOR[i] = fakelagValueColor[i]
-	end
-end)
-
-local CIRCLE_COLOR = {255, 255, 255, 255}
-ui.set_callback(Indicator.CircleColor, function (itemNumber)
-	local circleColor = { ui_get(itemNumber) }
-	for i=1, 4 do
-		CIRCLE_COLOR[i] = circleColor[i]
-	end
-end)
-
-ui_set(Indicator.OnShotAAIndicator, true)
-
-local function onShotAAIndicatorItemHandler()
-	local onShotAAIndicatorVisibility = ui_get(Indicator.Enabled) and ui_get(Indicator.OnShotAAIndicator)
-	ui_set_visible(Indicator.OnShotAAIndicatorLineColorLabel, onShotAAIndicatorVisibility)
-	ui_set_visible(Indicator.OnShotAAIndicatorLineColor, onShotAAIndicatorVisibility)
-end
-ui.set_callback(Indicator.OnShotAAIndicator, onShotAAIndicatorItemHandler)
-
-local ONSHOT_AA_INDICATOR_COLOR = {255, 255, 255, 255}
-ui.set_callback(Indicator.OnShotAAIndicatorColor, function (itemNumber)
-	local onShotAAIndicatorColor = { ui_get(itemNumber) }
-	for i=1, 4 do
-		ONSHOT_AA_INDICATOR_COLOR[i] = onShotAAIndicatorColor[i]
-	end
-end)
-
-local ONSHOT_AA_INDICATOR_LINE_COLOR = {255, 255, 255, 255}
-ui.set_callback(Indicator.OnShotAAIndicatorLineColor, function (itemNumber)
-	local onShotAAIndicatorLineColor = { ui_get(itemNumber) }
-	for i=1, 4 do
-		ONSHOT_AA_INDICATOR_LINE_COLOR[i] = onShotAAIndicatorLineColor[i]
-	end
-end)
---
 
 local function on_setup_command(e)
 	local getChokedCommands = e.chokedcommands
@@ -151,27 +139,43 @@ local function on_paint()
 		end
 	end
 end
+--
 
-local function IndicatorItemHandler()
-	local isIndicatorEnabled = ui_get(Indicator.Enabled)
+local function IndicatorItemHandler(item)
+	local itemName = ui_name(item)
 
-	for key, value in pairs(Indicator) do
-		if key ~= 'Enabled' then
+	if itemName == ui_name(Indicator.Enabled) then
+		local isIndicatorEnabled = ui_get(item)
+
+		for key, value in pairs(Indicator) do
+			if key == 'Enabled' then
+				goto skip
+			end
+
 			ui_set_visible(value, isIndicatorEnabled)
+
+			::skip::
 		end
+
+		local callback = isIndicatorEnabled and client_set_event_callback or client_unset_event_callback
+
+		callback('paint', on_paint)
+		callback('setup_command', on_setup_command)
 	end
 
-	-- Call it every time with master switch so it can retain its original visibility state
-	onShotAAIndicatorItemHandler()
-
-	if isIndicatorEnabled then
-		client_set_event_callback('paint', on_paint)
-		client_set_event_callback('setup_command', on_setup_command)
-	else
-		client_unset_event_callback('paint', on_paint)
-		client_unset_event_callback('setup_command', on_setup_command)
+	if itemName == ui_name(Indicator.OnShotAAIndicator)
+	or itemName == ui_name(Indicator.Enabled) then -- Call it every time with master switch so it can retain its original visibility state
+		local onShotAAIndicatorVisibility = ui_get(Indicator.Enabled) and ui_get(Indicator.OnShotAAIndicator)
+		ui_set_visible(Indicator.OnShotAAIndicatorLineColorLabel, onShotAAIndicatorVisibility)
+		ui_set_visible(Indicator.OnShotAAIndicatorLineColor, onShotAAIndicatorVisibility)
 	end
 end
-ui.set_callback(Indicator.Enabled, IndicatorItemHandler)
 
-IndicatorItemHandler()
+ui.set_callback(Indicator.Enabled, IndicatorItemHandler)
+ui.set_callback(Indicator.OnShotAAIndicator, IndicatorItemHandler)
+
+-- Defaults
+ui_set(Indicator.Enabled, true)
+ui_set(Indicator.DisplayFakelagValue, true)
+ui_set(Indicator.OnShotAAIndicator, true)
+ui_set(Indicator.LineColor, 0, 255, 131, 255)
