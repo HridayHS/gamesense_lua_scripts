@@ -4,11 +4,11 @@ local globals_maxplayers = globals.maxplayers
 
 local GameStateAPI = panorama.open().GameStateAPI
 
-local function UnmutePlayer(player_ent_index)
-    local player_xuid = GameStateAPI.GetPlayerXuidStringFromEntIndex(player_ent_index)
+local function UnmutePlayer(playerEntIndex)
+    local player_xuid = GameStateAPI.GetPlayerXuidStringFromEntIndex(playerEntIndex)
     if player_xuid ~= '0' and GameStateAPI.IsSelectedPlayerMuted(player_xuid) then
         GameStateAPI.ToggleMute(player_xuid)
-        print('Unmuted player: ', entity_get_player_name(player_ent_index))
+        print('Unmuted player: ', entity_get_player_name(playerEntIndex))
     end
 end
 
@@ -25,5 +25,5 @@ client.set_event_callback('player_connect_full', function (event)
     end
 
     -- Unmute player
-    UnmutePlayer(player_ent_index)
+    UnmutePlayer(playerEntIndex)
 end)
